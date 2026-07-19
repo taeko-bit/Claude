@@ -835,8 +835,9 @@ const ADVICE = [
     id: 'gut_repair',
     t: 'teal', badgeC: 'teal', badge: '腸内環境',
     title: 'パン・乳製品を2週間だけお休みして腸を休ませる',
-    body: 'お腹の張り・ガス・ゆるい便・胃もたれは「腸がお疲れ気味」のサイン。腸が疲れていると、せっかく食べたものの栄養がうまく吸収されず、血糖値も乱れやすくなります。まず2週間、腸に負担をかけやすい食べものをお休みしてみましょう。腸が元気になると、同じ食事でも体の調子が変わります。',
-    tips: ['2週間控えてみる：パン・パスタ・うどん、牛乳・ヨーグルト・チーズ、お酒、お菓子',
+    body: 'お腹の張り・ガス・ゆるい便・胃もたれは「腸がお疲れ気味」のサイン。ただし順番が大切です。先に整えるべきは「しっかり食べること」と「よく噛んで消化する力」。それでも不調が続く場合の次のステップとして、2週間だけ腸に負担をかけやすい食べものをお休みしてみましょう。',
+    tips: ['※大前提：控えることで食べる量が減ってしまうなら本末転倒。カロリーと消化力が先、制限はその次',
+           '2週間控えてみる：パン・パスタ・うどん、牛乳・ヨーグルト・チーズ、お酒、お菓子',
            '鼻炎や副鼻腔炎がある人は、特に牛乳・ヨーグルト・チーズを控えると変化が出やすい',
            '腸にやさしいネバネバ食材：オクラ・山芋・もずく・わかめ・納豆',
            '増やしたいもの：サバやイワシなどの青魚、味噌・納豆・キムチなどの発酵食品',
@@ -844,14 +845,14 @@ const ADVICE = [
            '主食に迷ったら白ごはん。パンの代わりに一番選びやすい選択肢'],
     score: s => {
       let sc = 0;
-      if (s.gut.has('bloated')) sc += 6;
-      if (s.gut.has('loose_stool')) sc += 5;
+      if (s.gut.has('bloated')) sc += 3;
+      if (s.gut.has('loose_stool')) sc += 4;
       if (s.gut.has('constipated')) sc += 4;
-      if (s.gut.has('digestive_slow')) sc += 5;
-      if (s.gut.has('gluten_dairy')) sc += 4;
-      if (s.gut.has('sinusitis')) sc += 3;
+      if (s.gut.has('digestive_slow')) sc += 2;
+      if (s.gut.has('gluten_dairy')) sc += 5;
+      if (s.gut.has('sinusitis')) sc += 4;
       if (s.symptoms.has('chronic_fatigue')) sc += 2;
-      if (s.symptoms.has('no_muscle')) sc += 2;
+      if (s.symptoms.has('no_muscle')) sc += 1;
       return sc;
     },
     today: '今日の昼食または夕食で、小麦のメインメニュー（パン・うどん・パスタ）を白米に置き換えてみてください。2週間続けるとお腹の張りが変わります。'
@@ -966,10 +967,11 @@ const ADVICE = [
            '胃が弱っているときは：オクラや山芋のネバネバ系・おかゆ・豆腐・白身魚から'],
     score: s => {
       let sc = 0;
-      if (s.gut.has('digestive_slow')) sc += 8;
-      if (s.gut.has('bloated')) sc += 5;
+      if (s.gut.has('digestive_slow')) sc += 11;
+      if (s.gut.has('bloated')) sc += 8;
       if (s.symptoms.has('post_meal_sleep')) sc += 4;
-      if (s.gut.has('loose_stool')) sc += 2;
+      if (s.gut.has('loose_stool')) sc += 4;
+      if (s.gut.has('gluten_dairy')) sc += 2;
       return sc;
     },
     today: '今夜の食事で、いつもより「噛む回数を2倍」だけを意識してみてください。食後の眠さが違うはずです。'
