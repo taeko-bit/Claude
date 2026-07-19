@@ -295,6 +295,53 @@ h2 {
 .btn-ghost:hover { border-color: var(--c-accent); color: var(--c-accent); }
 
 /* ── Today highlight ── */
+/* ── 1日の流れ 総括 ── */
+.summary-card {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  padding: 20px 22px;
+  margin-bottom: 16px;
+  background: var(--c-surface);
+  box-shadow: var(--shadow);
+}
+.summary-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--c-teal);
+  margin-bottom: 12px;
+}
+.summary-lead {
+  font-size: 13.5px;
+  color: var(--c-text2);
+  line-height: 1.8;
+  margin-bottom: 14px;
+}
+.timeline {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.timeline li {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--c-border);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.timeline li:first-child { border-top: none; }
+.tl-time {
+  flex-shrink: 0;
+  width: 62px;
+  color: var(--c-accent-deep);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.tl-do { color: var(--c-text); }
+
 .today-highlight {
   background: linear-gradient(135deg, var(--c-accent-dim), var(--c-surface2));
   border: 1px solid var(--c-border);
@@ -454,7 +501,7 @@ h2 {
     <div class="welcome-mark">🌸</div>
     <div class="eyebrow">Bless Lab ｜ 血糖値安定アドバイザー</div>
     <h1>あなたに合った<br>食事と生活のアドバイスを</h1>
-    <p class="sub">5つの質問に答えるだけで、血糖値を安定させるための優先アドバイスをお伝えします。<br>身体が変わると、人生はもっと楽しめる。<br>所要時間：約1〜2分</p>
+    <p class="sub">6つの質問に答えるだけで、あなたの1日の流れに合わせた血糖値安定のアドバイスをお伝えします。<br>身体が変わると、人生はもっと楽しめる。<br>所要時間：約1〜2分</p>
     <button class="btn btn-primary" onclick="go('symptoms')">はじめる</button>
   </div>
 
@@ -599,7 +646,7 @@ h2 {
 
   <!-- ── Q5: Gut ── -->
   <div class="screen" id="s-gut">
-    <div class="q-label">質問 5 / 5</div>
+    <div class="q-label">質問 5 / 6</div>
     <h2>腸の状態・消化に関して当てはまるものは？</h2>
     <p class="hint">複数選択できます</p>
     <div class="chips" id="gut-chip-area">
@@ -610,7 +657,45 @@ h2 {
       <div class="chip" data-v="gluten_dairy"  onclick="toggleGutChip(this)">小麦・乳製品を毎日食べている</div>
       <div class="chip" data-v="sinusitis"     onclick="toggleGutChip(this)">副鼻腔炎・鼻炎がある</div>
     </div>
-    <button class="btn btn-primary" onclick="showResults()">結果を見る</button>
+    <button class="btn btn-primary" onclick="go('bedtime')">次へ</button>
+  </div>
+
+  <!-- ── Q6: Bedtime ── -->
+  <div class="screen" id="s-bedtime">
+    <div class="q-label">質問 6 / 6</div>
+    <h2>ふだんの就寝時刻は？</h2>
+    <p class="hint">夜ふかしは低血糖・副腎の消耗と深く関わります</p>
+    <div class="options">
+      <label class="opt" data-v="after_1">
+        <div class="opt-dot"></div>
+        <div>
+          <div class="opt-main">深夜1時以降・不規則</div>
+          <div class="opt-sub">寝る時刻がバラバラ、または午前1時を過ぎる</div>
+        </div>
+      </label>
+      <label class="opt" data-v="midnight">
+        <div class="opt-dot"></div>
+        <div>
+          <div class="opt-main">0時〜1時ごろ</div>
+          <div class="opt-sub">日付が変わってから寝ることが多い</div>
+        </div>
+      </label>
+      <label class="opt" data-v="around_23">
+        <div class="opt-dot"></div>
+        <div>
+          <div class="opt-main">23時ごろ</div>
+          <div class="opt-sub">もう少し早くしたいと感じている</div>
+        </div>
+      </label>
+      <label class="opt" data-v="by_22">
+        <div class="opt-dot"></div>
+        <div>
+          <div class="opt-main">22時ごろまでに寝ている</div>
+          <div class="opt-sub">就寝時刻はほぼ理想的</div>
+        </div>
+      </label>
+    </div>
+    <button class="btn btn-primary" id="btn-bedtime" onclick="showResults()" disabled>結果を見る</button>
   </div>
 
   <!-- ── Results ── -->
@@ -619,6 +704,9 @@ h2 {
       <div class="eyebrow">あなたへのアドバイス</div>
       <h1>優先して取り組むべきこと</h1>
     </div>
+
+    <!-- 1日の流れ 総括 -->
+    <div class="summary-card" id="summary-card"></div>
 
     <!-- 今日1つだけ highlight -->
     <div class="today-highlight" id="today-card"></div>
@@ -640,13 +728,14 @@ const state = {
   gut:        new Set(),
   morning:    null,
   meals:      null,
-  snack:      null
+  snack:      null,
+  bedtime:    null
 };
 
-const SCREENS = ['welcome','symptoms','morning','meals','snack','gut','results'];
+const SCREENS = ['welcome','symptoms','morning','meals','snack','gut','bedtime','results'];
 let history = ['welcome'];
 
-const PROG = { welcome:0, symptoms:12, morning:30, meals:50, snack:70, gut:88, results:100 };
+const PROG = { welcome:0, symptoms:11, morning:26, meals:42, snack:58, gut:74, bedtime:90, results:100 };
 
 function go(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -717,19 +806,20 @@ const ADVICE = [
   {
     id: 'distribution',
     t: 'crit', badgeC: 'crit', badge: '最重要',
-    title: '食事の間隔を5時間以上あけない',
-    body: '間隔が空きすぎると血糖値が下がりきり、次の食事でドカ食い→急上昇→強い眠気に。「夜だけドカ食い」は意志の弱さではなく、昼間の空腹時間が長すぎるせいです。',
-    tips: ['5時間を超えそうなら、間におにぎりかゆで卵を1つはさむ',
-           '昼を抜きがちな人→デスクや車に「置き食」（ソイジョイ・甘栗）を常備',
-           '夜のおかずを翌朝・翌昼に取り分けておくと自然に3食に分散できる'],
+    title: '空腹時間を長くしすぎない（3食＋補食でこまめに）',
+    body: '血糖値は食後2〜3時間で下がり始めます。ここで何も食べないと、体は血糖を保つために筋肉を分解してエネルギーを作り出し（＝異化・糖新生）、同時に副腎がコルチゾールを出して踏ん張ります。この状態を繰り返すと、筋肉が減り副腎が消耗していきます。空腹を長引かせないことが、筋肉と副腎を守る一番の近道です。',
+    tips: ['3食に加えて10時・15〜16時の補食を。食後2〜3時間で下がり始めるタイミングを埋める',
+           '「夜だけドカ食い」は意志ではなく、昼間の空腹が長すぎるサイン',
+           '昼を抜きがちな人→デスクや車に置き食（甘栗・ゆで卵・ソイジョイ）を常備'],
     score: s => {
       let sc = 0;
       if (['night_heavy','two_meals','light_lunch'].includes(s.meals)) sc += 9;
-      if (s.symptoms.has('no_muscle')) sc += 3;
-      if (s.symptoms.has('chronic_fatigue')) sc += 2;
+      if (s.symptoms.has('no_muscle')) sc += 4;
+      if (s.symptoms.has('chronic_fatigue')) sc += 3;
+      if (s.symptoms.has('pms_bad')) sc += 1;
       return sc;
     },
-    today: '今日のお昼に卵1個か納豆1パックを足してみましょう。それだけで夕方の眠さが変わります。'
+    today: '今日のお昼と夕方に、間食を1回入れてみましょう。空腹の時間を短くするだけで、筋肉と副腎の消耗を防げます。'
   },
   {
     id: 'balance',
@@ -781,13 +871,16 @@ const ADVICE = [
     id: 'sleep',
     t: 'amber', badgeC: 'amber', badge: '睡眠',
     title: '22時（遅くても23時）までに寝る',
-    body: '寝不足の日は食欲を増やすホルモンが増え、誰でも食べすぎやすくなります。23時までに寝るだけで体の回復力が変わります。',
-    tips: ['目標は22時就寝・7時間以上（まずは23時から）',
-           'コーヒーや紅茶は午後2時まで',
-           '寝る1時間前にスマホをやめると寝つきがぐっと良くなる'],
+    body: '夜ふかしは睡眠中の低血糖を招き、副腎がコルチゾールを出して踏ん張るため、寝ているのに体は休まりません。また寝不足の翌日は食欲を増やすホルモンが増え、誰でも食べすぎ・血糖値の乱れが起きやすくなります。食事のケアと就寝時刻はセットで効いてきます。',
+    tips: ['目標は22時就寝・7時間以上（まずは今より30分早めるところから）',
+           '寝る前に空腹だと夜間低血糖になりやすい→夕食が早い日は少量の補食を',
+           '寝る1時間前にスマホをやめ、カフェインは午後2時まで'],
     score: s => {
       let sc = 2;
-      if (s.symptoms.has('morning_weak')) sc += 5;
+      if (s.bedtime === 'after_1')   sc += 8;
+      if (s.bedtime === 'midnight')  sc += 5;
+      if (s.bedtime === 'around_23') sc += 2;
+      if (s.symptoms.has('morning_weak')) sc += 4;
       if (s.symptoms.has('chronic_fatigue')) sc += 3;
       if (s.symptoms.has('pms_bad')) sc += 2;
       return sc;
@@ -1018,6 +1111,9 @@ function showResults() {
   const top = scored[0];
   const rest = scored.slice(1, 6);
 
+  // ── 1日の流れ 総括 ──
+  buildSummary();
+
   // Today card
   const todayEl = document.getElementById('today-card');
   if (top) {
@@ -1064,14 +1160,67 @@ function showResults() {
   go('results');
 }
 
+/* ── 1日の流れ 総括アドバイス ── */
+function buildSummary() {
+  // 朝食
+  const breakfastLate = ['no_breakfast','coffee_only','late_breakfast'].includes(state.morning);
+  const morningDo = breakfastLate
+    ? '起きて30分以内に何かひと口（おにぎり・卵・バナナなど）'
+    : '朝食は今のペースを keep（タンパク質も忘れずに）';
+  // 補食
+  const needsSnack = ['no_snack','unknown_timing','sweet_snack'].includes(state.snack);
+  // 就寝
+  const bedLabel = {
+    after_1:   '深夜1時以降',
+    midnight:  '0〜1時ごろ',
+    around_23: '23時ごろ',
+    by_22:     '22時ごろ'
+  }[state.bedtime] || '';
+  const bedLate = ['after_1','midnight'].includes(state.bedtime);
+  const bedDo = bedLate
+    ? 'まずは今より30分早める。空腹で寝ると夜間低血糖になるので、遅い夕食の日は少量の補食を'
+    : (state.bedtime === 'around_23'
+        ? '22時を目標にあと少し前倒し'
+        : '就寝時刻は理想的。この習慣を続けましょう');
+
+  // リード文（全体総括）
+  const gaps = [];
+  if (breakfastLate) gaps.push('朝の空腹時間');
+  if (needsSnack)    gaps.push('日中の補食');
+  if (bedLate)       gaps.push('夜ふかし');
+  let lead;
+  if (gaps.length === 0) {
+    lead = '1日のリズムはよく整っています。今の「食べる→補う→早く休む」の流れを保つことが、筋肉と副腎を守り、血糖値を安定させ続けるコツです。';
+  } else {
+    lead = `血糖値の安定は「点」ではなく「1日の流れ」で決まります。あなたの場合、特に<b>${gaps.join('・')}</b>が筋肉の分解（異化）や副腎の消耗につながりやすいポイント。下の流れで、空腹の時間を埋めていきましょう。`;
+  }
+
+  const rows = [
+    ['起床後',  morningDo],
+    ['10時ごろ', '小さな補食（甘栗・干し芋・ゆで卵など）'],
+    ['お昼',    'ご飯・おかず・野菜の3点セット。タンパク質は手のひら1枚分'],
+    ['15〜16時', needsSnack ? '2回目の補食（ここが1日で一番大事）' : '2回目の補食を軽く'],
+    ['夜',      '夕食は軽めでもOK。食後は皿洗いなどで少し動く（胃腸が弱い人は休む）'],
+    ['就寝',    bedLabel ? `${bedDo}（今：${bedLabel}）` : bedDo]
+  ];
+
+  const el = document.getElementById('summary-card');
+  el.innerHTML = `
+    <div class="summary-eyebrow">あなたの1日の流れ</div>
+    <div class="summary-lead">${lead}</div>
+    <ul class="timeline">
+      ${rows.map(r => `<li><span class="tl-time">${r[0]}</span><span class="tl-do">${r[1]}</span></li>`).join('')}
+    </ul>`;
+}
+
 function restart() {
   state.symptoms = new Set();
   state.gut      = new Set();
-  state.morning  = state.meals = state.snack = null;
+  state.morning  = state.meals = state.snack = state.bedtime = null;
   history = ['welcome'];
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('sel'));
   document.querySelectorAll('.opt').forEach(c => c.classList.remove('sel'));
-  ['morning','meals','snack'].forEach(g => {
+  ['morning','meals','snack','bedtime'].forEach(g => {
     const b = document.getElementById('btn-' + g);
     if (b) b.disabled = true;
   });
