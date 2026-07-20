@@ -816,8 +816,8 @@ h2 {
     <!-- 優先順位1位のアドバイス（1枠だけ） -->
     <div class="advice-list" id="advice-out"></div>
 
-    <!-- 実践チェック（積み重ね） -->
-    <button class="btn btn-primary check-btn" id="check-btn" onclick="doCheck()">今日、実践できた ✓</button>
+    <!-- 実践宣言（積み重ね） -->
+    <button class="btn btn-primary check-btn" id="check-btn" onclick="doCheck()">今日から始めてみる 🌱</button>
     <div class="record-card" id="record-card"></div>
 
     <!-- 集客CTA -->
@@ -875,7 +875,7 @@ function renderWelcomeRecord() {
   if (!el) return;
   if (r.checks > 0) {
     el.classList.remove('hidden');
-    el.innerHTML = `おかえりなさい 🌸<br>これまで <b>${r.checks}</b> 回、実践を積み重ねています。` +
+    el.innerHTML = `おかえりなさい 🌸<br>これまで <b>${r.checks}</b> 回、一歩を積み重ねています。` +
       (r.streak > 1 ? `　（継続 <b>${r.streak}</b> 日）` : '');
   } else {
     el.classList.add('hidden');
@@ -1292,7 +1292,7 @@ function showResults() {
   checkedThisSession = false;
   const cbtn = document.getElementById('check-btn');
   cbtn.classList.remove('done');
-  cbtn.textContent = '今日、実践できた ✓';
+  cbtn.textContent = '今日から始めてみる 🌱';
   renderRecord();
 
   go('results');
@@ -1320,7 +1320,7 @@ function doCheck() {
 
   const cbtn = document.getElementById('check-btn');
   cbtn.classList.add('done');
-  cbtn.textContent = '実践を記録しました ✓';
+  cbtn.textContent = '宣言しました 🌱 応援しています';
   renderRecord();
 }
 
@@ -1332,17 +1332,17 @@ function renderRecord() {
     el.classList.remove('hidden');
     let msg;
     if (r.checks === 1) {
-      msg = '最初の一歩を記録しました。小さな積み重ねが、未来の身体をつくります。';
+      msg = '最初の一歩を宣言しました。小さな積み重ねが、未来の身体をつくります。';
     } else if (r.streak >= 3) {
       msg = `${r.streak}日つづいています。この調子で、無理なく続けていきましょう 🌸`;
     } else {
-      msg = 'よく続けています。完璧じゃなくて大丈夫、できた日を数えていきましょう。';
+      msg = 'よく続けています。完璧じゃなくて大丈夫、始めた日を数えていきましょう。';
     }
     el.innerHTML = `
       <div class="record-stats">
         <div class="record-stat">
           <div class="record-num">${r.checks}</div>
-          <div class="record-label">実践できた回数</div>
+          <div class="record-label">始めてみた回数</div>
         </div>
         <div class="record-divider"></div>
         <div class="record-stat">
