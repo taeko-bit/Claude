@@ -838,8 +838,13 @@ const ADVICE = [
     tips: ['忙しい人→冷凍おにぎりの作り置き（チンして1分）やゆで卵。起きて30分以内に',
            '食欲がない人→バナナ半分・りんご・甘酒・お味噌汁など飲み込みやすいものから',
            'コーヒーだけはNG。飲むなら「何かひと口食べてから」の順番に'],
-    score: s => ['no_breakfast','coffee_only','late_breakfast'].includes(s.morning) ? 12 : 0,
-    today: '今夜、明日の朝の分のおにぎり1個かゆで卵を用意しておきましょう。明日は「チンする・むくだけ」です。'
+    score: s => {
+      // 朝食を抜いている人は、補食より朝食が最優先
+      if (['no_breakfast','coffee_only'].includes(s.morning)) return 30;
+      if (s.morning === 'late_breakfast') return 14;
+      return 0;
+    },
+    today: '明日の朝は、果物やバナナ・おにぎり1口など「食べやすいもの」からでOK。まず何かお腹に入れることが最優先です。'
   },
   {
     id: 'distribution',
@@ -885,6 +890,8 @@ const ADVICE = [
       if (s.symptoms.has('sugar_craving')) sc += 3;
       if (s.symptoms.has('poor_focus')) sc += 2;
       if (s.symptoms.has('irritable')) sc += 2;
+      // 朝食を抜いている人はまず朝食が先。補食の優先度は下げる
+      if (['no_breakfast','coffee_only'].includes(s.morning)) sc = Math.round(sc * 0.4);
       return sc;
     },
     today: '15時にアラームをセットして、甘栗か干し芋を食べてみましょう。夕方の眠さと甘いもの欲が変わります。'
