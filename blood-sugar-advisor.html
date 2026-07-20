@@ -428,6 +428,72 @@ h2 {
   color: var(--c-accent-deep);
   margin-bottom: 5px;
 }
+/* ── 積み重ね記録 ── */
+.welcome-record {
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  background: var(--c-surface2);
+  font-size: 13px;
+  color: var(--c-text2);
+  line-height: 1.7;
+}
+.welcome-record.hidden { display: none; }
+.welcome-record b { color: var(--c-accent-deep); font-size: 15px; }
+
+.check-btn { margin: 18px 0 0; }
+.check-btn.done {
+  background: var(--c-teal);
+  cursor: default;
+}
+.check-btn.done:hover { background: var(--c-teal); }
+
+.record-card {
+  margin-top: 14px;
+  padding: 18px 20px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  background: var(--c-surface);
+  box-shadow: var(--shadow);
+}
+.record-card.hidden { display: none; }
+.record-stats {
+  display: flex;
+  gap: 14px;
+}
+.record-stat {
+  flex: 1;
+  text-align: center;
+  padding: 6px 0;
+}
+.record-num {
+  font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', Georgia, serif;
+  font-size: 30px;
+  color: var(--c-accent);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.record-label {
+  font-size: 11px;
+  color: var(--c-text3);
+  margin-top: 4px;
+  letter-spacing: .04em;
+}
+.record-divider {
+  width: 1px;
+  background: var(--c-border);
+}
+.record-msg {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--c-border);
+  font-size: 12.5px;
+  color: var(--c-text2);
+  line-height: 1.7;
+  text-align: center;
+}
+
 .cta-card {
   margin: 20px 0 26px;
   padding: 20px 22px;
@@ -542,12 +608,13 @@ h2 {
     <div class="eyebrow">Bless Lab ｜ 血糖値安定アドバイザー</div>
     <h1>あなたに合った<br>食事と生活のアドバイスを</h1>
     <p class="sub">6つの質問に答えるだけで、あなたの1日の流れに合わせた血糖値安定のアドバイスをお伝えします。<br>身体が変わると、人生はもっと楽しめる。<br>所要時間：約1〜2分</p>
+    <div class="welcome-record" id="welcome-record"></div>
     <button class="btn btn-primary" onclick="go('symptoms')">はじめる</button>
   </div>
 
   <!-- ── Q1: Symptoms ── -->
   <div class="screen" id="s-symptoms">
-    <div class="q-label">質問 1 / 5</div>
+    <div class="q-label">質問 1 / 6</div>
     <h2>気になる症状を教えてください</h2>
     <p class="hint">複数選択できます（なければそのまま「次へ」）</p>
     <div class="chips" id="chip-area">
@@ -575,7 +642,7 @@ h2 {
 
   <!-- ── Q2: Morning ── -->
   <div class="screen" id="s-morning">
-    <div class="q-label">質問 2 / 5</div>
+    <div class="q-label">質問 2 / 6</div>
     <h2>朝のルーティンは？</h2>
     <div class="options">
       <label class="opt" data-v="no_breakfast">
@@ -612,7 +679,7 @@ h2 {
 
   <!-- ── Q3: Meals ── -->
   <div class="screen" id="s-meals">
-    <div class="q-label">質問 3 / 5</div>
+    <div class="q-label">質問 3 / 6</div>
     <h2>1日の食事パターンは？</h2>
     <div class="options">
       <label class="opt" data-v="night_heavy">
@@ -649,7 +716,7 @@ h2 {
 
   <!-- ── Q4: Snack ── -->
   <div class="screen" id="s-snack">
-    <div class="q-label">質問 4 / 5</div>
+    <div class="q-label">質問 4 / 6</div>
     <h2>間食（補食）のパターンは？</h2>
     <div class="options">
       <label class="opt" data-v="no_snack">
@@ -749,6 +816,10 @@ h2 {
     <!-- 優先順位1位のアドバイス（1枠だけ） -->
     <div class="advice-list" id="advice-out"></div>
 
+    <!-- 実践チェック（積み重ね） -->
+    <button class="btn btn-primary check-btn" id="check-btn" onclick="doCheck()">今日、実践できた ✓</button>
+    <div class="record-card" id="record-card"></div>
+
     <!-- 集客CTA -->
     <div class="cta-card" id="cta-card">
       <div class="cta-title">あなたに合った“1日の流れ”は、まだ続きがあります</div>
@@ -772,6 +843,45 @@ const state = {
 
 const SCREENS = ['welcome','symptoms','morning','meals','snack','gut','bedtime','results'];
 let history = ['welcome'];
+
+/* ── 記録の保存・読み込み（この端末に蓄積） ── */
+const STORE_KEY = 'blesslab_bloodsugar_record';
+function loadRecord() {
+  try {
+    return JSON.parse(localStorage.getItem(STORE_KEY)) ||
+      { checks: 0, streak: 0, lastCheck: null, diagnoses: 0 };
+  } catch (e) {
+    return { checks: 0, streak: 0, lastCheck: null, diagnoses: 0 };
+  }
+}
+function saveRecord(r) {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(r)); } catch (e) {}
+}
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+}
+function daysBetween(a, b) {
+  const pa = a.split('-').map(Number), pb = b.split('-').map(Number);
+  const da = new Date(pa[0], pa[1]-1, pa[2]), db = new Date(pb[0], pb[1]-1, pb[2]);
+  return Math.round((db - da) / 86400000);
+}
+let checkedThisSession = false;
+
+// welcome画面におかえりメッセージ
+function renderWelcomeRecord() {
+  const r = loadRecord();
+  const el = document.getElementById('welcome-record');
+  if (!el) return;
+  if (r.checks > 0) {
+    el.classList.remove('hidden');
+    el.innerHTML = `おかえりなさい 🌸<br>これまで <b>${r.checks}</b> 回、実践を積み重ねています。` +
+      (r.streak > 1 ? `　（継続 <b>${r.streak}</b> 日）` : '');
+  } else {
+    el.classList.add('hidden');
+  }
+}
+renderWelcomeRecord();
 
 const PROG = { welcome:0, symptoms:11, morning:26, meals:42, snack:58, gut:74, bedtime:90, results:100 };
 
@@ -1173,7 +1283,77 @@ function showResults() {
       </div>
     </div>`;
 
+  // 診断回数をカウント
+  const r = loadRecord();
+  r.diagnoses = (r.diagnoses || 0) + 1;
+  saveRecord(r);
+
+  // 実践チェックのUIをリセット
+  checkedThisSession = false;
+  const cbtn = document.getElementById('check-btn');
+  cbtn.classList.remove('done');
+  cbtn.textContent = '今日、実践できた ✓';
+  renderRecord();
+
   go('results');
+}
+
+/* ── 実践チェックを1回積む ── */
+function doCheck() {
+  if (checkedThisSession) return;
+  checkedThisSession = true;
+
+  const r = loadRecord();
+  const today = todayStr();
+  if (r.lastCheck === today) {
+    // 今日はすでにカウント済み（連続日数は増やさない）
+  } else {
+    if (r.lastCheck && daysBetween(r.lastCheck, today) === 1) {
+      r.streak = (r.streak || 0) + 1;
+    } else {
+      r.streak = 1;
+    }
+    r.lastCheck = today;
+  }
+  r.checks = (r.checks || 0) + 1;
+  saveRecord(r);
+
+  const cbtn = document.getElementById('check-btn');
+  cbtn.classList.add('done');
+  cbtn.textContent = '実践を記録しました ✓';
+  renderRecord();
+}
+
+/* ── 記録カードの表示 ── */
+function renderRecord() {
+  const r = loadRecord();
+  const el = document.getElementById('record-card');
+  if (r.checks > 0) {
+    el.classList.remove('hidden');
+    let msg;
+    if (r.checks === 1) {
+      msg = '最初の一歩を記録しました。小さな積み重ねが、未来の身体をつくります。';
+    } else if (r.streak >= 3) {
+      msg = `${r.streak}日つづいています。この調子で、無理なく続けていきましょう 🌸`;
+    } else {
+      msg = 'よく続けています。完璧じゃなくて大丈夫、できた日を数えていきましょう。';
+    }
+    el.innerHTML = `
+      <div class="record-stats">
+        <div class="record-stat">
+          <div class="record-num">${r.checks}</div>
+          <div class="record-label">実践できた回数</div>
+        </div>
+        <div class="record-divider"></div>
+        <div class="record-stat">
+          <div class="record-num">${r.streak || 0}</div>
+          <div class="record-label">継続日数</div>
+        </div>
+      </div>
+      <div class="record-msg">${msg}</div>`;
+  } else {
+    el.classList.add('hidden');
+  }
 }
 
 /* ── 1日の流れ 総括アドバイス ── */
@@ -1240,6 +1420,7 @@ function restart() {
     const b = document.getElementById('btn-' + g);
     if (b) b.disabled = true;
   });
+  renderWelcomeRecord();
   go('welcome');
 }
 </script>
