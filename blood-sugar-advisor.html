@@ -410,6 +410,15 @@ h2 {
 .abadge.amber { background: rgba(185,162,107,.15); color: var(--c-amber); }
 .abadge.teal  { background: rgba(138,160,140,.16); color: var(--c-teal); }
 
+.varied-note {
+  font-size: 12px;
+  color: var(--c-accent-deep);
+  background: var(--c-surface2);
+  border-radius: var(--r-sm);
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
 .acard-today {
   margin-top: 14px;
   padding: 12px 14px;
@@ -1263,18 +1272,36 @@ function showResults() {
     .filter(a => a.pts > 0)
     .sort((a, b) => b.pts - a.pts);
 
-  // 優先順位1位のアドバイスだけを表示（集客用）
-  const top = scored[0] || ADVICE.find(a => a.id === 'balance');
+  if (scored.length === 0) scored.push({ ...ADVICE.find(a => a.id === 'balance'), pts: 1 });
+
+  // 記録を読み込み（同じアドバイスが続いていないか確認）
+  const r = loadRecord();
+  const topId = scored[0].id;
+  const alreadyShown = (r.lastShownId === topId) ? (r.sameCount || 0) : 0;
+
+  // 同じ最優先が2回続いていたら、次の優先度に切り替えて変化をつける
+  let idx = 0;
+  let varied = false;
+  if (alreadyShown >= 2 && scored.length > 1) {
+    idx = 1;
+    varied = true;
+  }
+  const top = scored[idx];
 
   const out = document.getElementById('advice-out');
   out.innerHTML = '';
   const tips = top.tips
     ? '<ul class="atips">' + top.tips.map(t => `<li>${t}</li>`).join('') + '</ul>'
     : '';
+  const badgeText = varied ? 'つぎに大切なポイント' : 'あなたの最優先ポイント';
+  const variedNote = varied
+    ? '<div class="varied-note">同じ課題がしばらく続いています。今日は次のステップも試してみましょう（最優先は「' + scored[0].title + '」）。</div>'
+    : '';
   out.innerHTML = `
     <div class="acard t-${top.t}">
-      <div><span class="abadge ${top.badgeC}">あなたの最優先ポイント</span></div>
+      <div><span class="abadge ${top.badgeC}">${badgeText}</span></div>
       <div class="atitle">${top.title}</div>
+      ${variedNote}
       <div class="abody">${top.body}</div>
       ${tips}
       <div class="acard-today">
@@ -1283,9 +1310,14 @@ function showResults() {
       </div>
     </div>`;
 
-  // 診断回数をカウント
-  const r = loadRecord();
+  // 診断回数＋表示したアドバイスの連続回数を記録
   r.diagnoses = (r.diagnoses || 0) + 1;
+  if (r.lastShownId === top.id) {
+    r.sameCount = (r.sameCount || 0) + 1;
+  } else {
+    r.lastShownId = top.id;
+    r.sameCount = 1;
+  }
   saveRecord(r);
 
   // 実践チェックのUIをリセット
