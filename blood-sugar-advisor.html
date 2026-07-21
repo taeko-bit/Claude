@@ -173,18 +173,68 @@ h2 {
   margin-bottom: 16px;
 }
 
-/* ── Welcome icon ── */
-.welcome-mark {
-  width: 56px;
-  height: 56px;
-  background: var(--c-accent-dim);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 26px;
-  margin-bottom: 24px;
+/* ── Welcome / brand ── */
+.welcome-inner {
+  text-align: center;
+  padding: 12px 0 0;
 }
+.brand-mark {
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 22px;
+  display: block;
+}
+.wordmark {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 40px;
+  font-weight: 400;
+  letter-spacing: .01em;
+  color: var(--c-text);
+  line-height: 1;
+  margin-bottom: 12px;
+}
+.wordmark .lab { color: var(--c-accent); }
+.brand-tagline {
+  font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', Georgia, serif;
+  font-size: 14px;
+  color: var(--c-text2);
+  letter-spacing: .04em;
+  margin-bottom: 26px;
+}
+.brand-rule {
+  width: 40px;
+  height: 1px;
+  background: var(--c-border);
+  margin: 0 auto 26px;
+}
+.welcome-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .16em;
+  color: var(--c-accent);
+  margin-bottom: 16px;
+}
+.welcome-lead {
+  font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', Georgia, serif;
+  font-size: 19px;
+  line-height: 1.7;
+  color: var(--c-text);
+  text-wrap: balance;
+  margin-bottom: 18px;
+}
+.welcome-desc {
+  font-size: 13px;
+  color: var(--c-text2);
+  line-height: 1.9;
+  margin-bottom: 8px;
+}
+.welcome-time {
+  font-size: 11.5px;
+  color: var(--c-text3);
+  letter-spacing: .04em;
+  margin-bottom: 28px;
+}
+.welcome-inner .btn { text-align: center; }
 
 /* ── Chips (multi-select) ── */
 .chips {
@@ -613,12 +663,38 @@ h2 {
 
   <!-- ── Welcome ── -->
   <div class="screen active" id="s-welcome">
-    <div class="welcome-mark">🌸</div>
-    <div class="eyebrow">Bless Lab ｜ 血糖値安定アドバイザー</div>
-    <h1>あなたに合った<br>食事と生活のアドバイスを</h1>
-    <p class="sub">6つの質問に答えるだけで、あなたの1日の流れに合わせた血糖値安定のアドバイスをお伝えします。<br>身体が変わると、人生はもっと楽しめる。<br>所要時間：約1〜2分</p>
-    <div class="welcome-record" id="welcome-record"></div>
-    <button class="btn btn-primary" onclick="go('symptoms')">はじめる</button>
+    <div class="welcome-inner">
+      <svg class="brand-mark" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <!-- leaves -->
+        <path d="M50 78 C34 76 22 64 24 50 C36 52 47 62 50 78 Z" fill="#C3D2BC"/>
+        <path d="M50 78 C66 76 78 64 76 50 C64 52 53 62 50 78 Z" fill="#AEBCA7"/>
+        <path d="M50 80 L50 60" stroke="#9AAE95" stroke-width="1.4" stroke-linecap="round"/>
+        <!-- outer petals -->
+        <circle cx="50" cy="42" r="30" fill="#F5D9DF"/>
+        <path d="M50 12 C40 20 34 30 34 42 C34 30 40 20 50 12 Z" fill="#EFC9D2"/>
+        <circle cx="34" cy="40" r="15" fill="#F1CEd7"/>
+        <circle cx="66" cy="40" r="15" fill="#F1CED7"/>
+        <circle cx="42" cy="56" r="14" fill="#F3D3DB"/>
+        <circle cx="58" cy="56" r="14" fill="#F3D3DB"/>
+        <!-- mid petals -->
+        <circle cx="50" cy="34" r="13" fill="#FBE4E9"/>
+        <circle cx="40" cy="46" r="11" fill="#FBE4E9"/>
+        <circle cx="60" cy="46" r="11" fill="#FBE4E9"/>
+        <!-- inner bloom -->
+        <circle cx="50" cy="44" r="12" fill="#F7DAE1"/>
+        <circle cx="50" cy="44" r="6.5" fill="#E7B7C4"/>
+        <circle cx="50" cy="44" r="3" fill="#D99BAC"/>
+      </svg>
+      <div class="wordmark">Bless&nbsp;<span class="lab">Lab</span></div>
+      <div class="brand-tagline">身体が変わると、人生はもっと楽しめる。</div>
+      <div class="brand-rule"></div>
+      <div class="welcome-eyebrow">血糖値安定アドバイザー</div>
+      <div class="welcome-lead">あなたに合った<br>食事と生活の整え方を</div>
+      <p class="welcome-desc">6つの質問に答えるだけで、<br>あなたの1日の流れに合わせた<br>血糖値安定のアドバイスをお届けします。</p>
+      <p class="welcome-time">所要時間：約1〜2分</p>
+      <div class="welcome-record" id="welcome-record"></div>
+      <button class="btn btn-primary" onclick="go('symptoms')">はじめる</button>
+    </div>
   </div>
 
   <!-- ── Q1: Symptoms ── -->
