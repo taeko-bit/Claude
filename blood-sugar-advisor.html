@@ -9,7 +9,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <!-- ビルドバージョン（更新の目印） -->
-<meta name="app-version" content="2026-07-21.7">
+<meta name="app-version" content="2026-07-21.8">
 
 <title>血糖値安定アドバイザー</title>
 <!-- iPhoneホーム画面アイコン（葉のイラスト） -->
@@ -435,6 +435,15 @@ h2 {
   font-variant-numeric: tabular-nums;
 }
 .tl-do { color: var(--c-text); }
+.summary-night {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: var(--r-sm);
+  background: var(--c-surface2);
+  font-size: 12.5px;
+  color: var(--c-text2);
+  line-height: 1.75;
+}
 
 .today-highlight {
   background: linear-gradient(135deg, var(--c-accent-dim), var(--c-surface2));
@@ -1036,7 +1045,7 @@ h2 {
    ・古いService Worker / PWAキャッシュが端末に残っていた場合は、
      ここで自動的に解除・削除して常に最新版が表示されるようにする
 ─────────────────────────────────────────────── */
-var APP_VERSION = '2026-07-21.7';
+var APP_VERSION = '2026-07-21.8';
 (function purgeStaleCaches() {
   try {
     // 過去に自己ホスト等でService Workerが登録されていたら解除
@@ -1686,7 +1695,7 @@ function buildSummary() {
   const breakfastLate = ['no_breakfast','coffee_only','late_breakfast'].includes(state.morning);
   const morningDo = breakfastLate
     ? '起きて1時間以内に何かひと口（おにぎり・バナナ・果物など）'
-    : '朝食は今のペースを keep（タンパク質も忘れずに）';
+    : '朝食は今のペースを大切に（タンパク質も忘れずに）';
   // 補食
   const needsSnack = ['no_snack','unknown_timing','sweet_snack'].includes(state.snack);
   // 就寝
@@ -1698,10 +1707,12 @@ function buildSummary() {
   }[state.bedtime] || '';
   const bedLate = ['after_1','midnight'].includes(state.bedtime);
   const bedDo = bedLate
-    ? 'まずは今より30分早める。空腹で寝ると夜間低血糖になるので、遅い夕食の日は少量の補食を'
+    ? 'まずは今より30分早める。夕食が遅くなる日は、夕方に炭水化物をとって夕食は少なめに'
     : (state.bedtime === 'around_23'
         ? '22時を目標にあと少し前倒し'
         : '就寝時刻は理想的。この習慣を続けましょう');
+  // 夜間低血糖のセルフチェック（全員に添える）
+  const nightNote = '寝つきが悪い・明け方4時ごろ目が覚める人は、夜間低血糖かも。寝る30分前に果物を少量食べて、睡眠の質が変わるか試してみましょう。';
 
   // リード文（全体総括）
   const gaps = [];
@@ -1717,7 +1728,7 @@ function buildSummary() {
 
   const rows = [
     ['起床後',  morningDo],
-    ['10時ごろ', '小さな補食（甘栗・干し芋・ゆで卵など）'],
+    ['10時ごろ', '小さな補食（甘栗・干し芋・バナナなど）'],
     ['お昼',    'ご飯・おかず・野菜の3点セット。タンパク質は手のひら1枚分'],
     ['15〜16時', needsSnack ? '2回目の補食（ここが1日で一番大事）' : '2回目の補食を軽く'],
     ['夜',      '夕食は軽めでもOK。食後は皿洗いなどで少し動く（胃腸が弱い人は休む）'],
@@ -1730,7 +1741,8 @@ function buildSummary() {
     <div class="summary-lead">${lead}</div>
     <ul class="timeline">
       ${rows.map(r => `<li><span class="tl-time">${r[0]}</span><span class="tl-do">${r[1]}</span></li>`).join('')}
-    </ul>`;
+    </ul>
+    <div class="summary-night">${nightNote}</div>`;
 }
 
 function restart() {
