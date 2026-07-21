@@ -176,14 +176,7 @@ h2 {
 /* ── Welcome / brand ── */
 .welcome-inner {
   text-align: center;
-  padding: 40px 0 0;
-}
-/* 上部の葉のスプリグ */
-.brand-sprig {
-  width: 92px;
-  height: auto;
-  margin: 0 auto 20px;
-  display: block;
+  padding: 56px 0 0;
 }
 .wordmark {
   font-family: Georgia, 'Times New Roman', serif;
@@ -679,29 +672,6 @@ h2 {
   <div class="screen active" id="s-welcome">
     <div class="welcome-inner">
 
-      <!-- 上部：水彩の葉のスプリグ -->
-      <svg class="brand-sprig" viewBox="0 0 120 84" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <defs>
-          <linearGradient id="lf1" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#C6D4BE"/><stop offset="100%" stop-color="#A6B79E"/>
-          </linearGradient>
-          <linearGradient id="lf2" x1="1" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#D2DECB"/><stop offset="100%" stop-color="#B4C3AC"/>
-          </linearGradient>
-        </defs>
-        <path d="M60 80 C60 60 60 40 60 20" stroke="#9DB196" stroke-width="1.2" stroke-linecap="round"/>
-        <!-- 左の葉 -->
-        <path d="M60 66 C44 64 34 54 34 44 C48 45 58 53 60 66 Z" fill="url(#lf1)" opacity=".92"/>
-        <path d="M60 52 C46 49 37 40 38 31 C50 33 58 41 60 52 Z" fill="url(#lf2)" opacity=".9"/>
-        <path d="M60 40 C49 36 43 28 45 21 C54 24 60 31 60 40 Z" fill="url(#lf1)" opacity=".88"/>
-        <!-- 右の葉 -->
-        <path d="M60 66 C76 64 86 54 86 44 C72 45 62 53 60 66 Z" fill="url(#lf2)" opacity=".82"/>
-        <path d="M60 52 C74 49 83 40 82 31 C70 33 62 41 60 52 Z" fill="url(#lf1)" opacity=".8"/>
-        <path d="M60 40 C71 36 77 28 75 21 C66 24 60 31 60 40 Z" fill="url(#lf2)" opacity=".78"/>
-        <!-- 先端のつぼみ -->
-        <circle cx="60" cy="16" r="4" fill="#B4C3AC"/>
-      </svg>
-
       <!-- ワードマーク -->
       <div class="wordmark">Bless&nbsp;<span class="lab">Lab</span></div>
       <div class="brand-tagline">身体が変わると、<br>人生はもっと楽しめる。</div>
@@ -994,7 +964,7 @@ h2 {
     <div class="advice-list" id="advice-out"></div>
 
     <!-- 実践宣言（積み重ね） -->
-    <button class="btn btn-primary check-btn" id="check-btn" onclick="doCheck()">今日から始めてみる 🌱</button>
+    <button class="btn btn-primary check-btn" id="check-btn" onclick="doCheck()">今日から始めてみる</button>
     <div class="record-card" id="record-card"></div>
 
     <!-- 集客CTA -->
@@ -1052,7 +1022,7 @@ function renderWelcomeRecord() {
   if (!el) return;
   if (r.checks > 0) {
     el.classList.remove('hidden');
-    el.innerHTML = `おかえりなさい 🌱<br>これまで <b>${r.checks}</b> 回、一歩を積み重ねています。` +
+    el.innerHTML = `おかえりなさい<br>これまで <b>${r.checks}</b> 回、一歩を積み重ねています。` +
       (r.streak > 1 ? `　（継続 <b>${r.streak}</b> 日）` : '');
   } else {
     el.classList.add('hidden');
@@ -1492,7 +1462,7 @@ function showResults() {
   checkedThisSession = false;
   const cbtn = document.getElementById('check-btn');
   cbtn.classList.remove('done');
-  cbtn.textContent = '今日から始めてみる 🌱';
+  cbtn.textContent = '今日から始めてみる';
   renderRecord();
 
   go('results');
@@ -1520,7 +1490,7 @@ function doCheck() {
 
   const cbtn = document.getElementById('check-btn');
   cbtn.classList.add('done');
-  cbtn.textContent = '宣言しました 🌱 応援しています';
+  cbtn.textContent = '宣言しました。応援しています';
   renderRecord();
 }
 
@@ -1534,7 +1504,7 @@ function renderRecord() {
     if (r.checks === 1) {
       msg = '最初の一歩を宣言しました。小さな積み重ねが、未来の身体をつくります。';
     } else if (r.streak >= 3) {
-      msg = `${r.streak}日つづいています。この調子で、無理なく続けていきましょう 🌱`;
+      msg = `${r.streak}日つづいています。この調子で、無理なく続けていきましょう`;
     } else {
       msg = 'よく続けています。完璧じゃなくて大丈夫、始めた日を数えていきましょう。';
     }
