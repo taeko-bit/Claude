@@ -9,7 +9,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <!-- ビルドバージョン（更新の目印） -->
-<meta name="app-version" content="2026-07-21.5">
+<meta name="app-version" content="2026-07-21.6">
 
 <title>血糖値安定アドバイザー</title>
 <!-- iPhoneホーム画面アイコン（葉のイラスト） -->
@@ -1009,7 +1009,7 @@ h2 {
    ・古いService Worker / PWAキャッシュが端末に残っていた場合は、
      ここで自動的に解除・削除して常に最新版が表示されるようにする
 ─────────────────────────────────────────────── */
-var APP_VERSION = '2026-07-21.5';
+var APP_VERSION = '2026-07-21.6';
 (function purgeStaleCaches() {
   try {
     // 過去に自己ホスト等でService Workerが登録されていたら解除
@@ -1491,18 +1491,50 @@ function showResults() {
 
   if (scored.length === 0) scored.push({ ...ADVICE.find(a => a.id === 'balance'), pts: 1 });
 
-  // 記録を読み込み（同じアドバイスが続いていないか確認）
+  // 記録を読み込み
   const r = loadRecord();
-  const topId = scored[0].id;
-  const alreadyShown = (r.lastShownId === topId) ? (r.sameCount || 0) : 0;
+  const trueTop = scored[0];   // 本来の最優先
+  const trueTopId = trueTop.id;
 
-  // 同じ最優先が2回続いていたら、次の優先度に切り替えて変化をつける
+  /* ── 表示の変化ルール ──
+     同じ最優先が「2回」続いたら、その後の「3回」は別のカードを出す。
+     3回出し終えたら、また本来の最優先に戻る。
+     ・r.topRun       … 本来の最優先を連続で表示した回数
+     ・r.suppressId   … 現在おやすみ中の最優先カードのid
+     ・r.suppressLeft … あと何回そのカードをおやすみするか
+  ── */
   let idx = 0;
   let varied = false;
-  if (alreadyShown >= 2 && scored.length > 1) {
+
+  const inSuppress = (r.suppressId === trueTopId && (r.suppressLeft || 0) > 0);
+
+  if (inSuppress && scored.length > 1) {
+    // おやすみ期間中：別のカード（次の優先度）を出す
     idx = 1;
     varied = true;
+    r.suppressLeft = (r.suppressLeft || 0) - 1;
+    if (r.suppressLeft <= 0) {
+      // おやすみ終了 → 次回から本来の最優先が復活。連続カウントもリセット
+      r.suppressId = null;
+      r.topRun = 0;
+    }
+  } else {
+    // 通常：本来の最優先を出す
+    idx = 0;
+    if (r.lastTrueTopId === trueTopId) {
+      r.topRun = (r.topRun || 0) + 1;
+    } else {
+      r.lastTrueTopId = trueTopId;
+      r.topRun = 1;
+    }
+    // 2回続いたら、次の3回はおやすみさせる
+    if (r.topRun >= 2) {
+      r.suppressId = trueTopId;
+      r.suppressLeft = 3;
+      r.topRun = 0;
+    }
   }
+
   const top = scored[idx];
 
   const out = document.getElementById('advice-out');
@@ -1531,14 +1563,8 @@ function showResults() {
       </div>
     </div>`;
 
-  // 診断回数＋表示したアドバイスの連続回数を記録
+  // 診断回数を記録（変化ルールの状態は上で更新済み）
   r.diagnoses = (r.diagnoses || 0) + 1;
-  if (r.lastShownId === top.id) {
-    r.sameCount = (r.sameCount || 0) + 1;
-  } else {
-    r.lastShownId = top.id;
-    r.sameCount = 1;
-  }
   saveRecord(r);
 
   // 実践チェックのUIをリセット
