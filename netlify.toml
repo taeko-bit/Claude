@@ -1,0 +1,24 @@
+# ルート用 Netlify 設定
+# このリポジトリ（taeko-bit/claude）をそのままNetlifyに連携する場合、
+# 公開対象を netlify-site フォルダに限定する。
+# → 新しいリポジトリを作らなくても、このリポジトリを選ぶだけで公開できる。
+
+[build]
+  base = "netlify-site"
+  publish = "."
+
+# HTMLは毎回サーバーに最新を確認させる（キャッシュ残り防止）
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
