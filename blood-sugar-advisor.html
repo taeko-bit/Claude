@@ -3,6 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- ── キャッシュ対策：HTMLは常に最新を取得させる ── -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<!-- ビルドバージョン（更新の目印） -->
+<meta name="app-version" content="2026-07-21.1">
+
 <title>血糖値安定アドバイザー</title>
 <style>
 /* Bless Lab palette:
@@ -979,6 +987,39 @@ h2 {
 </div>
 
 <script>
+/* ── キャッシュ対策 ─────────────────────────────
+   このアプリはHTML1枚に全て内包した構成のため、
+   ・HTMLの再取得抑止 → <head>のCache-Controlメタで対応
+   ・古いService Worker / PWAキャッシュが端末に残っていた場合は、
+     ここで自動的に解除・削除して常に最新版が表示されるようにする
+─────────────────────────────────────────────── */
+var APP_VERSION = '2026-07-21.1';
+(function purgeStaleCaches() {
+  try {
+    // 過去に自己ホスト等でService Workerが登録されていたら解除
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function (regs) {
+        regs.forEach(function (r) { r.unregister(); });
+      }).catch(function () {});
+    }
+    // PWA / CacheStorage に残った旧バージョンを削除
+    if (window.caches && caches.keys) {
+      caches.keys().then(function (keys) {
+        keys.forEach(function (k) { caches.delete(k); });
+      }).catch(function () {});
+    }
+    // バージョンが変わっていたら一度だけ強制リロードして最新HTMLを取得
+    var seen = null;
+    try { seen = localStorage.getItem('blesslab_app_version'); } catch (e) {}
+    if (seen && seen !== APP_VERSION) {
+      try { localStorage.setItem('blesslab_app_version', APP_VERSION); } catch (e) {}
+      location.reload(true);
+      return;
+    }
+    try { localStorage.setItem('blesslab_app_version', APP_VERSION); } catch (e) {}
+  } catch (e) { /* 失敗してもアプリ動作には影響なし */ }
+})();
+
 const state = {
   symptoms:   new Set(),
   gut:        new Set(),
