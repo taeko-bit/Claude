@@ -9,7 +9,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <!-- ビルドバージョン（更新の目印） -->
-<meta name="app-version" content="2026-07-21.4">
+<meta name="app-version" content="2026-07-21.5">
 
 <title>血糖値安定アドバイザー</title>
 <!-- iPhoneホーム画面アイコン（葉のイラスト） -->
@@ -489,6 +489,16 @@ h2 {
   padding: 8px 12px;
   margin-bottom: 10px;
   line-height: 1.6;
+}
+.acard-caution {
+  margin-top: 12px;
+  padding: 10px 13px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--c-text2);
+  background: #FDF3F0;
+  border: 1px solid #F2D9D2;
+  border-radius: var(--r-sm);
 }
 .acard-today {
   margin-top: 14px;
@@ -999,7 +1009,7 @@ h2 {
    ・古いService Worker / PWAキャッシュが端末に残っていた場合は、
      ここで自動的に解除・削除して常に最新版が表示されるようにする
 ─────────────────────────────────────────────── */
-var APP_VERSION = '2026-07-21.4';
+var APP_VERSION = '2026-07-21.5';
 (function purgeStaleCaches() {
   try {
     // 過去に自己ホスト等でService Workerが登録されていたら解除
@@ -1341,11 +1351,32 @@ const ADVICE = [
     score: s => {
       let sc = 0;
       if (s.symptoms.has('cold_hands')) sc += 9;
-      if (s.symptoms.has('dizziness')) sc += 4;
+      if (s.symptoms.has('dizziness')) sc += 3;
       if (s.symptoms.has('chronic_fatigue')) sc += 2;
       return sc;
     },
     today: '手足が冷たくなる時間帯をメモして、明日その1時間前に間食を試してみましょう。'
+  },
+  {
+    id: 'dizziness_care',
+    t: 'teal', badgeC: 'teal', badge: 'めまい・立ちくらみ',
+    title: 'めまい・立ちくらみは、まず低血糖を疑う',
+    body: '脳はブドウ糖を主なエネルギー源にしているため、血糖値が下がるとふらつき・立ちくらみが起きやすくなります。まずは血糖値を切らさないこと。そのうえで、塩分（ミネラル）と鉄が足りているかも見直しましょう。',
+    tips: ['基本は補食：空腹を長引かせず、10時・15時ごろに甘栗・干し芋・おにぎりなどを',
+           '塩分はミネラルの多い天然塩を選ぶ（雪塩・ぬちまーす・海の精など）。汗をかく時期・朝は特に意識',
+           '水分＋塩分をセットで。朝一番に一杯の水＋ひとつまみの塩もおすすめ',
+           '隠れ貧血チェック：フェリチン・血清鉄・TIBCを血液検査で（鉄不足でもふらつく）',
+           '立ち上がりはゆっくり。急に立つと一時的に血圧が下がりやすい'],
+    caution: '回転性の強いめまい・繰り返す・耳鳴りや頭痛を伴う場合は、自己判断せず耳鼻科や内科を受診してください。',
+    score: s => {
+      let sc = 0;
+      if (s.symptoms.has('dizziness')) sc += 10;
+      if (s.symptoms.has('morning_weak')) sc += 3;
+      if (s.symptoms.has('chronic_fatigue')) sc += 2;
+      if (s.symptoms.has('cold_hands')) sc += 2;
+      return sc;
+    },
+    today: 'まず今日、10時か15時に補食を1回。加えて、料理の塩を天然塩に替えてみましょう。ふらつく前に血糖値を切らさないのがコツです。'
   },
   {
     id: 'protein_variety',
@@ -1483,6 +1514,9 @@ function showResults() {
   const variedNote = varied
     ? '<div class="varied-note">同じ課題がしばらく続いています。今日は次のステップも試してみましょう（最優先は「' + scored[0].title + '」）。</div>'
     : '';
+  const caution = top.caution
+    ? '<div class="acard-caution">' + top.caution + '</div>'
+    : '';
   out.innerHTML = `
     <div class="acard t-${top.t}">
       <div><span class="abadge ${top.badgeC}">${badgeText}</span></div>
@@ -1490,6 +1524,7 @@ function showResults() {
       ${variedNote}
       <div class="abody">${top.body}</div>
       ${tips}
+      ${caution}
       <div class="acard-today">
         <span class="acard-today-label">まず今日1つだけ</span>
         ${top.today || ''}
