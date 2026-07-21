@@ -9,7 +9,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <!-- ビルドバージョン（更新の目印） -->
-<meta name="app-version" content="2026-07-21.3">
+<meta name="app-version" content="2026-07-21.4">
 
 <title>血糖値安定アドバイザー</title>
 <!-- iPhoneホーム画面アイコン（葉のイラスト） -->
@@ -823,14 +823,14 @@ h2 {
       <label class="opt" data-v="late_breakfast">
         <div class="opt-dot"></div>
         <div>
-          <div class="opt-main">起きてから2〜3時間後に食べる</div>
-          <div class="opt-sub">午前10〜11時頃に朝食を食べることが多い</div>
+          <div class="opt-main">起きて1時間以上たってから食べる</div>
+          <div class="opt-sub">午前が進んでから朝食を食べることが多い</div>
         </div>
       </label>
       <label class="opt" data-v="early_breakfast">
         <div class="opt-dot"></div>
         <div>
-          <div class="opt-main">起きて30分以内に食べる</div>
+          <div class="opt-main">起きて1時間以内に食べる</div>
           <div class="opt-sub">朝食のタイミングはほぼ問題ない</div>
         </div>
       </label>
@@ -999,7 +999,7 @@ h2 {
    ・古いService Worker / PWAキャッシュが端末に残っていた場合は、
      ここで自動的に解除・削除して常に最新版が表示されるようにする
 ─────────────────────────────────────────────── */
-var APP_VERSION = '2026-07-21.3';
+var APP_VERSION = '2026-07-21.4';
 (function purgeStaleCaches() {
   try {
     // 過去に自己ホスト等でService Workerが登録されていたら解除
@@ -1139,7 +1139,7 @@ const ADVICE = [
     t: 'crit', badgeC: 'crit', badge: '最重要',
     title: '朝は「作らなくていい朝ごはん」を用意しておく',
     body: '朝起きた時点で体はガス欠寸前。食べずに動くと筋肉を削ってエネルギーにしてしまい、午前中のイライラやだるさの原因になります。頑張って作るのではなく「準備ゼロで食べられるもの」を仕込んでおきましょう。',
-    tips: ['忙しい人→冷凍おにぎりの作り置き（チンして1分）やゆで卵。起きて30分以内に',
+    tips: ['忙しい人→冷凍おにぎりの作り置き（チンして1分）や果物・バナナ。起きて1時間以内に',
            '食欲がない人→バナナ半分・りんご・甘酒・お味噌汁など飲み込みやすいものから',
            'コーヒーだけはNG。飲むなら「何かひと口食べてから」の順番に'],
     score: s => {
@@ -1579,7 +1579,7 @@ function buildSummary() {
   // 朝食
   const breakfastLate = ['no_breakfast','coffee_only','late_breakfast'].includes(state.morning);
   const morningDo = breakfastLate
-    ? '起きて30分以内に何かひと口（おにぎり・卵・バナナなど）'
+    ? '起きて1時間以内に何かひと口（おにぎり・バナナ・果物など）'
     : '朝食は今のペースを keep（タンパク質も忘れずに）';
   // 補食
   const needsSnack = ['no_snack','unknown_timing','sweet_snack'].includes(state.snack);
