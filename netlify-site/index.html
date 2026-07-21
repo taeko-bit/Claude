@@ -9,7 +9,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <!-- ビルドバージョン（更新の目印） -->
-<meta name="app-version" content="2026-07-21.6">
+<meta name="app-version" content="2026-07-21.7">
 
 <title>血糖値安定アドバイザー</title>
 <!-- iPhoneホーム画面アイコン（葉のイラスト） -->
@@ -367,6 +367,29 @@ h2 {
 
 /* ── Today highlight ── */
 /* ── 1日の流れ 総括 ── */
+.summary-card.hidden,
+.summary-unlock.hidden { display: none; }
+.summary-unlock {
+  margin: 22px 0 12px;
+  padding: 16px 18px;
+  border-radius: var(--r);
+  background: linear-gradient(135deg, var(--c-accent-dim), var(--c-surface2));
+  text-align: center;
+}
+.summary-unlock .u-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--c-accent-deep);
+  margin-bottom: 6px;
+}
+.summary-unlock .u-title {
+  font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', Georgia, serif;
+  font-size: 16px;
+  color: var(--c-text);
+  line-height: 1.5;
+}
 .summary-card {
   border: 1px solid var(--c-border);
   border-radius: var(--r);
@@ -987,6 +1010,10 @@ h2 {
     <!-- 優先順位1位のアドバイス（1枠だけ） -->
     <div class="advice-list" id="advice-out"></div>
 
+    <!-- 5回達成で出現する総合アドバイス（1日の流れ） -->
+    <div class="summary-unlock hidden" id="summary-unlock"></div>
+    <div class="summary-card hidden" id="summary-card"></div>
+
     <!-- 実践宣言（積み重ね） -->
     <button class="btn btn-primary check-btn" id="check-btn" onclick="doCheck()">今日から始めてみる</button>
     <div class="record-card" id="record-card"></div>
@@ -1009,7 +1036,7 @@ h2 {
    ・古いService Worker / PWAキャッシュが端末に残っていた場合は、
      ここで自動的に解除・削除して常に最新版が表示されるようにする
 ─────────────────────────────────────────────── */
-var APP_VERSION = '2026-07-21.6';
+var APP_VERSION = '2026-07-21.7';
 (function purgeStaleCaches() {
   try {
     // 過去に自己ホスト等でService Workerが登録されていたら解除
@@ -1566,6 +1593,24 @@ function showResults() {
   // 診断回数を記録（変化ルールの状態は上で更新済み）
   r.diagnoses = (r.diagnoses || 0) + 1;
   saveRecord(r);
+
+  // ── 5回達成で「総合アドバイス（1日の流れ）」を出現させる ──
+  const unlockEl  = document.getElementById('summary-unlock');
+  const summaryEl = document.getElementById('summary-card');
+  if (r.diagnoses >= 5) {
+    buildSummary();  // summary-card の中身を生成
+    summaryEl.classList.remove('hidden');
+    unlockEl.classList.remove('hidden');
+    unlockEl.innerHTML = (r.diagnoses === 5)
+      ? '<div class="u-eyebrow">5回達成しました</div><div class="u-title">あなたの「1日の流れ」総合アドバイスが完成しました</div>'
+      : '<div class="u-eyebrow">あなたの総合アドバイス</div><div class="u-title">続けているあなたへ、1日の流れをおさらい</div>';
+  } else {
+    summaryEl.classList.add('hidden');
+    unlockEl.classList.add('hidden');
+    const remain = 5 - r.diagnoses;
+    unlockEl.classList.remove('hidden');
+    unlockEl.innerHTML = '<div class="u-eyebrow">総合アドバイスまで</div><div class="u-title">あと ' + remain + ' 回の診断で、あなた専用の「1日の流れ」総合アドバイスが解放されます</div>';
+  }
 
   // 実践チェックのUIをリセット
   checkedThisSession = false;
