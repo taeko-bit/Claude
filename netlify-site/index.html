@@ -9,7 +9,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <!-- ビルドバージョン（更新の目印） -->
-<meta name="app-version" content="2026-07-21.9">
+<meta name="app-version" content="2026-07-21.10">
 
 <title>血糖値安定アドバイザー</title>
 <!-- iPhoneホーム画面アイコン（葉のイラスト） -->
@@ -1045,7 +1045,7 @@ h2 {
    ・古いService Worker / PWAキャッシュが端末に残っていた場合は、
      ここで自動的に解除・削除して常に最新版が表示されるようにする
 ─────────────────────────────────────────────── */
-var APP_VERSION = '2026-07-21.9';
+var APP_VERSION = '2026-07-21.10';
 (function purgeStaleCaches() {
   try {
     // 過去に自己ホスト等でService Workerが登録されていたら解除
@@ -1730,7 +1730,7 @@ function buildSummary() {
     ['起床後',  morningDo],
     ['10時ごろ', '小さな補食（甘栗・干し芋・バナナなど）'],
     ['お昼',    'ご飯・おかず・野菜の3点セット。タンパク質は手のひら1枚分'],
-    ['15〜16時', needsSnack ? '2回目の補食（ここが1日で一番大事）' : '今のリズムを維持（できていれば追加不要）'],
+    ['15〜16時', needsSnack ? '2回目の補食（ここが1日で一番大事）' : '2回目の補食を忘れずに（この時間が一番下がりやすい）'],
     ['夜',      '夕食は軽めでもOK。食後は皿洗いなどで少し動く（胃腸が弱い人は休む）'],
     ['就寝',    bedLabel ? `${bedDo}（今：${bedLabel}）` : bedDo]
   ];
