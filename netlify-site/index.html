@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- ── キャッシュ対策：HTMLは常に最新を取得させる ── -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<!-- ビルドバージョン（更新の目印） -->
+<meta name="app-version" content="2026-07-21.1">
+
+<title>血糖値安定アドバイザー</title>
+<style>
+/* Bless Lab palette:
+   Blossom Pink #F5D9DF / Petal Pink #FBECEF / Mist Blue #DCEAF1
+   Warm Ivory #F8F6F2 / Sage Green #AEBCA7 / Stone Greige #C9C2B8 / Charcoal #5C5A58 */
+:root {
+  --c-accent:       #C98A9A;   /* rose — interactive */
+  --c-accent-dim:   #F5D9DF;   /* blossom pink */
+  --c-accent-deep:  #B06F81;
+  --c-amber:        #B9A26B;   /* soft gold */
+  --c-red:          #C4707E;   /* deep rose (crit) */
+  --c-teal:         #8AA08C;   /* sage (gut) */
+
+  --c-bg:           #FFFFFF;   /* 純白背景 */
+  --c-surface:      #FDFCFB;   /* ほんのりグレージュがかった白 */
+  --c-surface2:     #FBECEF;   /* petal pink */
+  --c-border:       #DDD6CD;   /* greige line (Stone Greige系) */
+  --c-text:         #5C5A58;   /* charcoal */
+  --c-text2:        #85817D;
+  --c-text3:        #ADA8A2;
+
+  --c-chip:         #FBECEF;
+  --c-chip-sel:     #C98A9A;
+  --c-chip-sel-txt: #FFFFFF;
+
+  --c-prog-bg:      #EEE9E2;   /* greige */
+  --c-prog-fill:    #C98A9A;
+
+  --shadow: 0 2px 12px rgba(92, 90, 88, 0.06);
+  --r: 16px;
+  --r-sm: 10px;
+  --transition: 0.28s ease;
+}
+:root[data-theme="light"] {
+  --c-accent:       #C98A9A;
+  --c-accent-dim:   #F5D9DF;
+  --c-accent-deep:  #B06F81;
+  --c-amber:        #B9A26B;
+  --c-red:          #C4707E;
+  --c-teal:         #8AA08C;
+  --c-bg:           #FFFFFF;
+  --c-surface:      #FDFCFB;
+  --c-surface2:     #FBECEF;
+  --c-border:       #DDD6CD;
+  --c-text:         #5C5A58;
+  --c-text2:        #85817D;
+  --c-text3:        #ADA8A2;
+  --c-chip:         #FBECEF;
+  --c-chip-sel:     #C98A9A;
+  --c-chip-sel-txt: #FFFFFF;
+  --c-prog-bg:      #EEE9E2;   /* greige */
+  --c-prog-fill:    #C98A9A;
+  --shadow: 0 2px 12px rgba(92, 90, 88, 0.06);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic ProN',
+               'Yu Gothic UI', 'Meiryo', sans-serif;
+  background: var(--c-bg);
+  color: var(--c-text);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 28px 16px 56px;
+}
+
+.app {
+  width: 100%;
+  max-width: 540px;
+}
+
+/* ── Progress ── */
+.prog-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 36px;
+}
+.prog-track {
+  flex: 1;
+  height: 3px;
+  background: var(--c-prog-bg);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.prog-fill {
+  height: 100%;
+  background: var(--c-prog-fill);
+  border-radius: 2px;
+  transition: width 0.4s cubic-bezier(.4,0,.2,1);
+}
+.prog-back {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--c-text3);
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color var(--transition);
+  display: flex;
+  align-items: center;
+}
+.prog-back:hover { color: var(--c-accent); }
+.prog-back.hidden { visibility: hidden; }
+
+/* ── Screens ── */
+.screen { display: none; }
+.screen.active {
+  display: block;
+  animation: fadeUp var(--transition) both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  @keyframes fadeUp { from { opacity: 0; } to { opacity: 1; } }
+}
+
+/* ── Typography ── */
+.eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--c-accent);
+  margin-bottom: 14px;
+}
+.q-label {
+  font-size: 12px;
+  color: var(--c-text3);
+  font-weight: 600;
+  margin-bottom: 10px;
+  letter-spacing: .05em;
+}
+h1 {
+  font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', Georgia, serif;
+  font-size: 26px;
+  font-weight: normal;
+  line-height: 1.45;
+  text-wrap: balance;
+  color: var(--c-text);
+  margin-bottom: 14px;
+}
+h2 {
+  font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', Georgia, serif;
+  font-size: 20px;
+  font-weight: normal;
+  line-height: 1.5;
+  text-wrap: balance;
+  color: var(--c-text);
+  margin-bottom: 6px;
+}
+.sub {
+  font-size: 14px;
+  color: var(--c-text2);
+  line-height: 1.75;
+  margin-bottom: 30px;
+}
+.hint {
+  font-size: 12px;
+  color: var(--c-text3);
+  margin-bottom: 16px;
+}
+
+/* ── Welcome / brand ── */
+.welcome-inner {
+  text-align: center;
+  padding: 56px 0 0;
+}
+.wordmark {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 42px;
+  font-weight: 400;
+  letter-spacing: .02em;
+  color: var(--c-text);
+  line-height: 1;
+  margin-bottom: 18px;
+}
+.wordmark .lab { color: var(--c-accent); }
+.brand-tagline {
+  font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', Georgia, serif;
+  font-size: 15px;
+  color: var(--c-text2);
+  letter-spacing: .05em;
+  line-height: 1.9;
+  /* 大きめの余白（リズム：大） */
+  margin-bottom: 46px;
+}
+.brand-rule {
+  width: 34px;
+  height: 1px;
+  background: var(--c-border);
+  margin: 0 auto 34px;
+}
+/* 中央の水彩イラスト（アイキャッチ） */
+.brand-scene {
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  margin: 0 auto 44px;
+  display: block;
+}
+/* ヒーロー：一番目立たせる */
+.welcome-hero {
+  font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', Georgia, serif;
+  font-size: 25px;
+  line-height: 1.65;
+  color: var(--c-text);
+  text-wrap: balance;
+  /* リズム：小 */
+  margin-bottom: 14px;
+}
+.welcome-eyebrow {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .18em;
+  color: var(--c-teal);
+  margin-bottom: 20px;
+}
+.welcome-desc {
+  font-size: 13px;
+  color: var(--c-text2);
+  line-height: 2;
+  margin-bottom: 10px;
+}
+.welcome-time {
+  font-size: 11.5px;
+  color: var(--c-text3);
+  letter-spacing: .06em;
+  /* リズム：大 */
+  margin-bottom: 40px;
+}
+.welcome-inner .btn { text-align: center; }
+
+/* ── Chips (multi-select) ── */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-bottom: 28px;
+}
+.chip {
+  padding: 9px 15px;
+  border-radius: 100px;
+  border: 1px solid var(--c-border);
+  background: var(--c-chip);
+  color: var(--c-text);
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition), color var(--transition);
+  user-select: none;
+  line-height: 1.4;
+}
+.chip:hover { border-color: var(--c-accent); }
+.chip.sel {
+  background: var(--c-chip-sel);
+  color: var(--c-chip-sel-txt);
+  border-color: var(--c-chip-sel);
+}
+.chip-group-label {
+  width: 100%;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  color: var(--c-text3);
+  text-transform: uppercase;
+  padding-top: 4px;
+}
+
+/* ── Option cards (single-select) ── */
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-bottom: 28px;
+}
+.opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 15px 16px;
+  border-radius: var(--r);
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: border-color var(--transition), background var(--transition);
+}
+.opt:hover { border-color: var(--c-accent); background: var(--c-surface2); }
+.opt.sel   { border-color: var(--c-accent); background: var(--c-accent-dim); }
+.opt-dot {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--c-border);
+  margin-top: 2px;
+  transition: border-color var(--transition), background var(--transition);
+  display: grid;
+  place-items: center;
+}
+.opt.sel .opt-dot {
+  border-color: var(--c-accent);
+  background: var(--c-accent);
+}
+.opt.sel .opt-dot::after {
+  content: '';
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c-chip-sel-txt);
+}
+.opt-main { font-size: 14.5px; line-height: 1.45; color: var(--c-text); }
+.opt-sub  { font-size: 12.5px; color: var(--c-text2); margin-top: 3px; line-height: 1.5; }
+
+/* ── Buttons ── */
+.btn {
+  width: 100%;
+  padding: 15px;
+  border-radius: var(--r);
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition);
+  letter-spacing: .02em;
+}
+.btn-primary {
+  background: var(--c-accent);
+  color: #fff;
+}
+.btn-primary:hover   { background: var(--c-accent-deep); }
+.btn-primary:disabled { opacity: .35; cursor: not-allowed; }
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--c-border);
+  color: var(--c-text2);
+  margin-top: 10px;
+}
+.btn-ghost:hover { border-color: var(--c-accent); color: var(--c-accent); }
+
+/* ── Today highlight ── */
+/* ── 1日の流れ 総括 ── */
+.summary-card {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  padding: 20px 22px;
+  margin-bottom: 16px;
+  background: var(--c-surface);
+  box-shadow: var(--shadow);
+}
+.summary-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--c-teal);
+  margin-bottom: 12px;
+}
+.summary-lead {
+  font-size: 13.5px;
+  color: var(--c-text2);
+  line-height: 1.8;
+  margin-bottom: 14px;
+}
+.timeline {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.timeline li {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--c-border);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.timeline li:first-child { border-top: none; }
+.tl-time {
+  flex-shrink: 0;
+  width: 62px;
+  color: var(--c-accent-deep);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.tl-do { color: var(--c-text); }
+
+.today-highlight {
+  background: linear-gradient(135deg, var(--c-accent-dim), var(--c-surface2));
+  border: 1px solid var(--c-border);
+  border-left: 4px solid var(--c-accent);
+  border-radius: var(--r);
+  padding: 20px 22px;
+  margin-bottom: 20px;
+  color: var(--c-text);
+  box-shadow: var(--shadow);
+}
+.today-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--c-accent-deep);
+  margin-bottom: 8px;
+}
+.today-title {
+  font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', Georgia, serif;
+  font-size: 17px;
+  font-weight: normal;
+  line-height: 1.45;
+  margin-bottom: 8px;
+}
+.today-body {
+  font-size: 13px;
+  color: var(--c-text2);
+  line-height: 1.75;
+}
+
+/* ── Results ── */
+.results-intro { margin-bottom: 20px; }
+.advice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.acard {
+  background: var(--c-surface);
+  border-radius: var(--r);
+  border: 1px solid var(--c-border);
+  border-left-width: 4px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+}
+.acard.t-crit   { border-left-color: var(--c-red); }
+.acard.t-main   { border-left-color: var(--c-accent); }
+.acard.t-amber  { border-left-color: var(--c-amber); }
+.acard.t-teal   { border-left-color: var(--c-teal); }
+
+.abadge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-bottom: 9px;
+}
+.abadge.crit  { background: rgba(196,112,126,.13); color: var(--c-red); }
+.abadge.main  { background: rgba(201,138,154,.14); color: var(--c-accent-deep); }
+.abadge.amber { background: rgba(185,162,107,.15); color: var(--c-amber); }
+.abadge.teal  { background: rgba(138,160,140,.16); color: var(--c-teal); }
+
+.varied-note {
+  font-size: 12px;
+  color: var(--c-accent-deep);
+  background: var(--c-surface2);
+  border-radius: var(--r-sm);
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
+.acard-today {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: var(--c-surface2);
+  border-radius: var(--r-sm);
+  font-size: 12.5px;
+  color: var(--c-text2);
+  line-height: 1.7;
+}
+.acard-today-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--c-accent-deep);
+  margin-bottom: 5px;
+}
+/* ── 積み重ね記録 ── */
+.welcome-record {
+  margin-bottom: 20px;
+  padding: 16px 18px;
+  border: none;
+  border-radius: var(--r);
+  background: var(--c-accent-dim);
+  font-size: 13px;
+  color: var(--c-text2);
+  line-height: 1.9;
+}
+.welcome-record.hidden { display: none; }
+.welcome-record b { color: var(--c-accent-deep); font-size: 15px; }
+
+.check-btn { margin: 18px 0 0; }
+.check-btn.done {
+  background: var(--c-teal);
+  cursor: default;
+}
+.check-btn.done:hover { background: var(--c-teal); }
+
+.record-card {
+  margin-top: 14px;
+  padding: 18px 20px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  background: var(--c-surface);
+  box-shadow: var(--shadow);
+}
+.record-card.hidden { display: none; }
+.record-stats {
+  display: flex;
+  gap: 14px;
+}
+.record-stat {
+  flex: 1;
+  text-align: center;
+  padding: 6px 0;
+}
+.record-num {
+  font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', Georgia, serif;
+  font-size: 30px;
+  color: var(--c-accent);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.record-label {
+  font-size: 11px;
+  color: var(--c-text3);
+  margin-top: 4px;
+  letter-spacing: .04em;
+}
+.record-divider {
+  width: 1px;
+  background: var(--c-border);
+}
+.record-msg {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--c-border);
+  font-size: 12.5px;
+  color: var(--c-text2);
+  line-height: 1.7;
+  text-align: center;
+}
+
+.cta-card {
+  margin: 20px 0 26px;
+  padding: 20px 22px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  background: linear-gradient(135deg, var(--c-accent-dim), var(--c-surface2));
+  box-shadow: var(--shadow);
+}
+.cta-title {
+  font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', Georgia, serif;
+  font-size: 15.5px;
+  color: var(--c-text);
+  line-height: 1.5;
+  margin-bottom: 8px;
+  text-wrap: balance;
+}
+.cta-body {
+  font-size: 12.5px;
+  color: var(--c-text2);
+  line-height: 1.75;
+}
+
+.atitle {
+  font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', Georgia, serif;
+  font-size: 15.5px;
+  color: var(--c-text);
+  line-height: 1.4;
+  margin-bottom: 7px;
+}
+.abody {
+  font-size: 13px;
+  color: var(--c-text2);
+  line-height: 1.75;
+}
+.atips {
+  list-style: none;
+  margin-top: 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.atips li {
+  font-size: 12.5px;
+  color: var(--c-text2);
+  padding-left: 14px;
+  position: relative;
+  line-height: 1.6;
+}
+.atips li::before {
+  content: '›';
+  position: absolute;
+  left: 0;
+  color: var(--c-accent);
+  font-weight: 700;
+}
+
+/* ── Snack cards ── */
+.snack-section {
+  margin-bottom: 28px;
+}
+.snack-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--c-text3);
+  margin-bottom: 10px;
+}
+.snack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+}
+.snack-item {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  box-shadow: var(--shadow);
+}
+.snack-name {
+  font-size: 13.5px;
+  color: var(--c-text);
+  font-weight: 500;
+  margin-bottom: 3px;
+}
+.snack-note {
+  font-size: 11.5px;
+  color: var(--c-text3);
+  line-height: 1.5;
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Progress bar -->
+  <div class="prog-wrap">
+    <button class="prog-back hidden" id="back-btn" onclick="goBack()" aria-label="戻る">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M12 5L7 10L12 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <div class="prog-track">
+      <div class="prog-fill" id="prog" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- ── Welcome ── -->
+  <div class="screen active" id="s-welcome">
+    <div class="welcome-inner">
+
+      <!-- ワードマーク -->
+      <div class="wordmark">Bless&nbsp;<span class="lab">Lab</span></div>
+      <div class="brand-tagline">身体が変わると、<br>人生はもっと楽しめる。</div>
+
+      <div class="brand-rule"></div>
+
+      <!-- 中央：水彩イラスト（ハーブティー・ノート・植物） -->
+      <svg class="brand-scene" viewBox="0 0 200 116" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="tea" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#F3DFA6"/><stop offset="100%" stop-color="#E7C77C"/>
+          </linearGradient>
+          <linearGradient id="leafS" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#C6D4BE"/><stop offset="100%" stop-color="#A6B79E"/>
+          </linearGradient>
+        </defs>
+
+        <!-- やわらかな影 -->
+        <ellipse cx="100" cy="104" rx="82" ry="6" fill="#F1ECE6" opacity=".7"/>
+
+        <!-- ノート -->
+        <g>
+          <rect x="104" y="44" width="74" height="54" rx="6" fill="#FDFBF8" stroke="#E4DFD8" stroke-width="1"/>
+          <rect x="104" y="44" width="74" height="54" rx="6" fill="none" stroke="#EFEAE3" stroke-width="1"/>
+          <!-- リング -->
+          <g stroke="#CDBFa0" stroke-width="1.4">
+            <line x1="108" y1="40" x2="108" y2="50" stroke="#C9B994"/>
+            <line x1="118" y1="40" x2="118" y2="50" stroke="#C9B994"/>
+            <line x1="128" y1="40" x2="128" y2="50" stroke="#C9B994"/>
+            <line x1="138" y1="40" x2="138" y2="50" stroke="#C9B994"/>
+            <line x1="148" y1="40" x2="148" y2="50" stroke="#C9B994"/>
+            <line x1="158" y1="40" x2="158" y2="50" stroke="#C9B994"/>
+            <line x1="168" y1="40" x2="168" y2="50" stroke="#C9B994"/>
+          </g>
+          <!-- ペン -->
+          <g transform="rotate(24 150 78)">
+            <rect x="120" y="74" width="60" height="4.4" rx="2.2" fill="#F3EFE9" stroke="#E1DAD1" stroke-width=".8"/>
+            <path d="M180 74 l7 2.2 l-7 2.2 Z" fill="#D9CBB0"/>
+            <rect x="126" y="74" width="7" height="4.4" fill="#E9E2D8"/>
+          </g>
+        </g>
+
+        <!-- ハーブティー（ガラスカップ） -->
+        <g>
+          <ellipse cx="52" cy="98" rx="34" ry="7" fill="#FBF6EF" stroke="#EbE4DA" stroke-width="1"/>
+          <path d="M26 66 C26 88 34 96 52 96 C70 96 78 88 78 66 Z" fill="#FBF7F0" stroke="#E6DFD4" stroke-width="1.1"/>
+          <!-- お茶 -->
+          <path d="M31 70 C33 84 40 90 52 90 C64 90 71 84 73 70 Z" fill="url(#tea)" opacity=".85"/>
+          <!-- 取っ手 -->
+          <path d="M78 72 C90 70 90 84 79 84" fill="none" stroke="#E6DFD4" stroke-width="2" stroke-linecap="round"/>
+          <!-- 浮かぶカモミール -->
+          <g>
+            <circle cx="50" cy="76" r="2" fill="#E7C77C"/>
+            <g fill="#FCF8F0">
+              <circle cx="50" cy="72.5" r="1.5"/><circle cx="53.4" cy="74.4" r="1.5"/>
+              <circle cx="53.4" cy="78" r="1.5"/><circle cx="50" cy="79.6" r="1.5"/>
+              <circle cx="46.6" cy="78" r="1.5"/><circle cx="46.6" cy="74.4" r="1.5"/>
+            </g>
+            <circle cx="50" cy="76" r="1.6" fill="#E7C77C"/>
+          </g>
+          <!-- 湯気 -->
+          <path d="M46 58 C43 54 49 51 46 47" stroke="#DDD6CD" stroke-width="1.1" stroke-linecap="round" fill="none" opacity=".7"/>
+          <path d="M58 58 C55 54 61 51 58 47" stroke="#DDD6CD" stroke-width="1.1" stroke-linecap="round" fill="none" opacity=".55"/>
+        </g>
+
+        <!-- 手前の小さな植物 -->
+        <g opacity=".95">
+          <path d="M96 98 C96 90 96 84 96 78" stroke="#9DB196" stroke-width="1" stroke-linecap="round"/>
+          <path d="M96 90 C88 89 83 84 83 79 C90 80 95 84 96 90 Z" fill="url(#leafS)"/>
+          <path d="M96 84 C104 83 109 78 109 73 C102 74 97 78 96 84 Z" fill="url(#leafS)" opacity=".85"/>
+          <path d="M96 80 C90 78 87 73 88 69 C94 71 96 75 96 80 Z" fill="url(#leafS)" opacity=".8"/>
+        </g>
+      </svg>
+
+      <div class="brand-rule"></div>
+
+      <!-- ヒーロー：一番目立たせたい情報 -->
+      <div class="welcome-eyebrow">血糖値安定アドバイザー</div>
+      <h1 class="welcome-hero">あなたに合った<br>食事と生活の整え方を</h1>
+      <p class="welcome-desc">6つの質問に答えるだけで、<br>今日のあなたに必要なアドバイスを。</p>
+      <p class="welcome-time">約1〜2分</p>
+
+      <div class="welcome-record" id="welcome-record"></div>
+      <button class="btn btn-primary" onclick="go('symptoms')">はじめる</button>
+    </div>
+  </div>
+
+  <!-- ── Q1: Symptoms ── -->
+  <div class="screen" id="s-symptoms">
+    <div class="q-label">質問 1 / 6</div>
+    <h2>気になる症状を教えてください</h2>
+    <p class="hint">複数選択できます（なければそのまま「次へ」）</p>
+    <div class="chips" id="chip-area">
+      <div class="chip-group-label">エネルギー・覚醒</div>
+      <div class="chip" data-v="post_meal_sleep"   onclick="toggleChip(this)">食後に眠くなる</div>
+      <div class="chip" data-v="afternoon_fatigue" onclick="toggleChip(this)">夕方に強い眠気・疲れ</div>
+      <div class="chip" data-v="morning_weak"      onclick="toggleChip(this)">朝が弱い・起きられない</div>
+      <div class="chip" data-v="chronic_fatigue"   onclick="toggleChip(this)">慢性的な疲れが取れない</div>
+
+      <div class="chip-group-label">気分・メンタル</div>
+      <div class="chip" data-v="irritable"         onclick="toggleChip(this)">イライラ・不安感がある</div>
+      <div class="chip" data-v="pms_bad"           onclick="toggleChip(this)">PMSがひどい・生理前が特につらい</div>
+      <div class="chip" data-v="poor_focus"        onclick="toggleChip(this)">集中力が続かない</div>
+
+      <div class="chip-group-label">体の症状</div>
+      <div class="chip" data-v="sugar_craving"     onclick="toggleChip(this)">甘いものへの強い欲求</div>
+      <div class="chip" data-v="dizziness"         onclick="toggleChip(this)">立ちくらみ・目まい</div>
+      <div class="chip" data-v="eyelid_twitch"     onclick="toggleChip(this)">まぶたのピクピク・足のつり</div>
+      <div class="chip" data-v="no_muscle"         onclick="toggleChip(this)">筋肉がつきにくい・痩せにくい</div>
+      <div class="chip" data-v="belly_fat"         onclick="toggleChip(this)">お腹周りに脂肪がつきやすい</div>
+      <div class="chip" data-v="cold_hands"        onclick="toggleChip(this)">冷え・手足が白くなる</div>
+    </div>
+    <button class="btn btn-primary" onclick="go('morning')">次へ</button>
+  </div>
+
+  <!-- ── Q2: Morning ── -->
+  <div class="screen" id="s-morning">
+    <div class="q-label">質問 2 / 6</div>
+    <h2>朝のルーティンは？</h2>
+    <div class="options">
+      <label class="opt" data-v="no_breakfast">
+        <div class="opt-dot"></div>
+        <div>
+          <div class="opt-main">朝食を食べていない</div>
+          <div class="opt-sub">朝は何も食べず出かけることが多い</div>
+        </div>
+      </label>
+      <label class="opt" data-v="coffee_only">
+        <div class="opt-dot"></div>
+        <div>
+          <div class="opt-main">コーヒーだけ飲む</div>
+          <div class="opt-sub">コーヒーを朝食代わりにしている</div>
+        </div>
+      </label>
+      <label class="opt" data-v="late_breakfast">
+        <div class="opt-dot"></div>
+        <div>
+          <div class="opt-main">起きてから2〜3時間後に食べる</div>
+          <div class="opt-sub">午前10〜11時頃に朝食を食べることが多い</div>
+        </div>
+      </label>
+      <label class="opt" data-v="early_breakfast">
+        <div class="opt-dot"></div>
+        <div>
+          <div class="opt-main">起きて30分以内に食べる</div>
+          <div class="opt-sub">朝食のタイミングはほぼ問題ない</div>
+        </div>
+      </label>
+    </div>
+    <button class="btn btn-primary" id="btn-morning" onclick="go('meals')" disabled>次へ</button>
+  </div>
+
+  <!-- ── Q3: Meals ── -->
+  <div class="screen" id="s-meals">
+    <div class="q-label">質問 3 / 6</div>
+    <h2>1日の食事パターンは？</h2>
+    <div class="options">
+      <label class="opt" data-v="night_heavy">
+        <div class="opt-dot"></div>
+        <div>
+          <div class="opt-main">夜に食事が偏っている</div>
+          <div class="opt-sub">昼は軽め・夜にしっかり食べることが多い</div>
+        </div>
+      </label>
+      <label class="opt" data-v="two_meals">
+        <div class="opt-dot"></div>
+        <div>
+          <div class="opt-main">1日2食以下</div>
+          <div class="opt-sub">昼を抜いて夜だけ、など</div>
+        </div>
+      </label>
+      <label class="opt" data-v="light_lunch">
+        <div class="opt-dot"></div>
+        <div>
+          <div class="opt-main">昼食が軽い（パン・コーヒーだけなど）</div>
+          <div class="opt-sub">昼はさっと済ませてしまうことが多い</div>
+        </div>
+      </label>
+      <label class="opt" data-v="balanced">
+        <div class="opt-dot"></div>
+        <div>
+          <div class="opt-main">3食バランスよく食べられている</div>
+          <div class="opt-sub">朝昼夜とも量とバランスが取れている</div>
+        </div>
+      </label>
+    </div>
+    <button class="btn btn-primary" id="btn-meals" onclick="go('snack')" disabled>次へ</button>
+  </div>
+
+  <!-- ── Q4: Snack ── -->
+  <div class="screen" id="s-snack">
+    <div class="q-label">質問 4 / 6</div>
+    <h2>間食（補食）のパターンは？</h2>
+    <div class="options">
+      <label class="opt" data-v="no_snack">
+        <div class="opt-dot"></div>
+        <div>
+          <div class="opt-main">ほとんどしない</div>
+          <div class="opt-sub">食事以外では食べないようにしている</div>
+        </div>
+      </label>
+      <label class="opt" data-v="sweet_snack">
+        <div class="opt-dot"></div>
+        <div>
+          <div class="opt-main">甘いお菓子・スナック菓子を食べる</div>
+          <div class="opt-sub">チョコ・ポテチ・クッキーなど</div>
+        </div>
+      </label>
+      <label class="opt" data-v="healthy_snack">
+        <div class="opt-dot"></div>
+        <div>
+          <div class="opt-main">芋・果物・おにぎりなどを食べる</div>
+          <div class="opt-sub">血糖値にやさしい間食ができている</div>
+        </div>
+      </label>
+      <label class="opt" data-v="unknown_timing">
+        <div class="opt-dot"></div>
+        <div>
+          <div class="opt-main">何を食べればいいかわからない</div>
+          <div class="opt-sub">何をいつ食べればいいかを知りたい</div>
+        </div>
+      </label>
+    </div>
+    <button class="btn btn-primary" id="btn-snack" onclick="go('gut')" disabled>次へ</button>
+  </div>
+
+  <!-- ── Q5: Gut ── -->
+  <div class="screen" id="s-gut">
+    <div class="q-label">質問 5 / 6</div>
+    <h2>腸の状態・消化に関して当てはまるものは？</h2>
+    <p class="hint">複数選択できます</p>
+    <div class="chips" id="gut-chip-area">
+      <div class="chip" data-v="bloated"       onclick="toggleGutChip(this)">食後にお腹が張る・ガスが出やすい</div>
+      <div class="chip" data-v="loose_stool"   onclick="toggleGutChip(this)">軟便・下痢気味</div>
+      <div class="chip" data-v="constipated"   onclick="toggleGutChip(this)">便秘気味</div>
+      <div class="chip" data-v="digestive_slow" onclick="toggleGutChip(this)">消化が遅い・もたれやすい</div>
+      <div class="chip" data-v="gluten_dairy"  onclick="toggleGutChip(this)">小麦・乳製品を毎日食べている</div>
+      <div class="chip" data-v="sinusitis"     onclick="toggleGutChip(this)">副鼻腔炎・鼻炎がある</div>
+    </div>
+    <button class="btn btn-primary" onclick="go('bedtime')">次へ</button>
+  </div>
+
+  <!-- ── Q6: Bedtime ── -->
+  <div class="screen" id="s-bedtime">
+    <div class="q-label">質問 6 / 6</div>
+    <h2>ふだんの就寝時刻は？</h2>
+    <p class="hint">夜ふかしは夜間の低血糖や疲れの回復と深く関わります</p>
+    <div class="options">
+      <label class="opt" data-v="after_1">
+        <div class="opt-dot"></div>
+        <div>
+          <div class="opt-main">深夜1時以降・不規則</div>
+          <div class="opt-sub">寝る時刻がバラバラ、または午前1時を過ぎる</div>
+        </div>
+      </label>
+      <label class="opt" data-v="midnight">
+        <div class="opt-dot"></div>
+        <div>
+          <div class="opt-main">0時〜1時ごろ</div>
+          <div class="opt-sub">日付が変わってから寝ることが多い</div>
+        </div>
+      </label>
+      <label class="opt" data-v="around_23">
+        <div class="opt-dot"></div>
+        <div>
+          <div class="opt-main">23時ごろ</div>
+          <div class="opt-sub">もう少し早くしたいと感じている</div>
+        </div>
+      </label>
+      <label class="opt" data-v="by_22">
+        <div class="opt-dot"></div>
+        <div>
+          <div class="opt-main">22時ごろまでに寝ている</div>
+          <div class="opt-sub">就寝時刻はほぼ理想的</div>
+        </div>
+      </label>
+    </div>
+    <button class="btn btn-primary" id="btn-bedtime" onclick="showResults()" disabled>結果を見る</button>
+  </div>
+
+  <!-- ── Results ── -->
+  <div class="screen" id="s-results">
+    <div class="results-intro">
+      <div class="eyebrow">あなたへのアドバイス</div>
+      <h1>あなたが今、<br>いちばん大切にしたいこと</h1>
+      <p class="sub" style="margin-bottom:22px">たくさんのことを一度に頑張る必要はありません。回答をもとに、まず取り組む「たった1つ」をお届けします。</p>
+    </div>
+
+    <!-- 優先順位1位のアドバイス（1枠だけ） -->
+    <div class="advice-list" id="advice-out"></div>
+
+    <!-- 実践宣言（積み重ね） -->
+    <button class="btn btn-primary check-btn" id="check-btn" onclick="doCheck()">今日から始めてみる</button>
+    <div class="record-card" id="record-card"></div>
+
+    <!-- 集客CTA -->
+    <div class="cta-card" id="cta-card">
+      <div class="cta-title">あなたに合った“1日の流れ”は、<br>まだ続きがあります</div>
+      <div class="cta-body">血糖値の安定は、朝ごはん・補食・睡眠など「1日の流れ」全体で決まります。あなたの回答に合わせた具体的な整え方は、Bless Labの体質改善プログラムでお伝えしています。</div>
+    </div>
+
+    <button class="btn btn-ghost" onclick="restart()">もう一度診断する</button>
+  </div>
+
+</div>
+
+<script>
+/* ── キャッシュ対策 ─────────────────────────────
+   このアプリはHTML1枚に全て内包した構成のため、
+   ・HTMLの再取得抑止 → <head>のCache-Controlメタで対応
+   ・古いService Worker / PWAキャッシュが端末に残っていた場合は、
+     ここで自動的に解除・削除して常に最新版が表示されるようにする
+─────────────────────────────────────────────── */
+var APP_VERSION = '2026-07-21.1';
+(function purgeStaleCaches() {
+  try {
+    // 過去に自己ホスト等でService Workerが登録されていたら解除
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function (regs) {
+        regs.forEach(function (r) { r.unregister(); });
+      }).catch(function () {});
+    }
+    // PWA / CacheStorage に残った旧バージョンを削除
+    if (window.caches && caches.keys) {
+      caches.keys().then(function (keys) {
+        keys.forEach(function (k) { caches.delete(k); });
+      }).catch(function () {});
+    }
+    // バージョンが変わっていたら一度だけ強制リロードして最新HTMLを取得
+    var seen = null;
+    try { seen = localStorage.getItem('blesslab_app_version'); } catch (e) {}
+    if (seen && seen !== APP_VERSION) {
+      try { localStorage.setItem('blesslab_app_version', APP_VERSION); } catch (e) {}
+      location.reload(true);
+      return;
+    }
+    try { localStorage.setItem('blesslab_app_version', APP_VERSION); } catch (e) {}
+  } catch (e) { /* 失敗してもアプリ動作には影響なし */ }
+})();
+
+const state = {
+  symptoms:   new Set(),
+  gut:        new Set(),
+  morning:    null,
+  meals:      null,
+  snack:      null,
+  bedtime:    null
+};
+
+const SCREENS = ['welcome','symptoms','morning','meals','snack','gut','bedtime','results'];
+let history = ['welcome'];
+
+/* ── 記録の保存・読み込み（この端末に蓄積） ── */
+const STORE_KEY = 'blesslab_bloodsugar_record';
+function loadRecord() {
+  try {
+    return JSON.parse(localStorage.getItem(STORE_KEY)) ||
+      { checks: 0, streak: 0, lastCheck: null, diagnoses: 0 };
+  } catch (e) {
+    return { checks: 0, streak: 0, lastCheck: null, diagnoses: 0 };
+  }
+}
+function saveRecord(r) {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(r)); } catch (e) {}
+}
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+}
+function daysBetween(a, b) {
+  const pa = a.split('-').map(Number), pb = b.split('-').map(Number);
+  const da = new Date(pa[0], pa[1]-1, pa[2]), db = new Date(pb[0], pb[1]-1, pb[2]);
+  return Math.round((db - da) / 86400000);
+}
+let checkedThisSession = false;
+
+// welcome画面におかえりメッセージ
+function renderWelcomeRecord() {
+  const r = loadRecord();
+  const el = document.getElementById('welcome-record');
+  if (!el) return;
+  if (r.checks > 0) {
+    el.classList.remove('hidden');
+    el.innerHTML = `おかえりなさい<br>これまで <b>${r.checks}</b> 回、一歩を積み重ねています。` +
+      (r.streak > 1 ? `　（継続 <b>${r.streak}</b> 日）` : '');
+  } else {
+    el.classList.add('hidden');
+  }
+}
+renderWelcomeRecord();
+
+const PROG = { welcome:0, symptoms:11, morning:26, meals:42, snack:58, gut:74, bedtime:90, results:100 };
+
+function go(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  document.getElementById('prog').style.width = PROG[id] + '%';
+
+  if (id !== 'welcome' && history[history.length-1] !== id) history.push(id);
+
+  const backBtn = document.getElementById('back-btn');
+  backBtn.classList.toggle('hidden', history.length <= 1);
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goBack() {
+  if (history.length <= 1) return;
+  history.pop();
+  const prev = history[history.length - 1];
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-' + prev).classList.add('active');
+  document.getElementById('prog').style.width = PROG[prev] + '%';
+
+  const backBtn = document.getElementById('back-btn');
+  backBtn.classList.toggle('hidden', history.length <= 1);
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function toggleChip(el) {
+  const v = el.dataset.v;
+  el.classList.toggle('sel');
+  state.symptoms.has(v) ? state.symptoms.delete(v) : state.symptoms.add(v);
+}
+
+function toggleGutChip(el) {
+  const v = el.dataset.v;
+  el.classList.toggle('sel');
+  state.gut.has(v) ? state.gut.delete(v) : state.gut.add(v);
+}
+
+// Single-select option cards
+document.querySelectorAll('.options').forEach(group => {
+  group.querySelectorAll('.opt').forEach(card => {
+    card.addEventListener('click', () => {
+      const grp = group.parentElement.id.replace('s-', '');
+      group.querySelectorAll('.opt').forEach(c => c.classList.remove('sel'));
+      card.classList.add('sel');
+      state[grp] = card.dataset.v;
+      const btn = document.getElementById('btn-' + grp);
+      if (btn) btn.disabled = false;
+    });
+  });
+});
+
+/* ── Advice definitions ── */
+const ADVICE = [
+  {
+    id: 'breakfast',
+    t: 'crit', badgeC: 'crit', badge: '最重要',
+    title: '朝は「作らなくていい朝ごはん」を用意しておく',
+    body: '朝起きた時点で体はガス欠寸前。食べずに動くと筋肉を削ってエネルギーにしてしまい、午前中のイライラやだるさの原因になります。頑張って作るのではなく「準備ゼロで食べられるもの」を仕込んでおきましょう。',
+    tips: ['忙しい人→冷凍おにぎりの作り置き（チンして1分）やゆで卵。起きて30分以内に',
+           '食欲がない人→バナナ半分・りんご・甘酒・お味噌汁など飲み込みやすいものから',
+           'コーヒーだけはNG。飲むなら「何かひと口食べてから」の順番に'],
+    score: s => {
+      // 朝食を抜いている人は、補食より朝食が最優先
+      if (['no_breakfast','coffee_only'].includes(s.morning)) return 30;
+      if (s.morning === 'late_breakfast') return 14;
+      return 0;
+    },
+    today: '明日の朝は、果物やバナナ・おにぎり1口など「食べやすいもの」からでOK。まず何かお腹に入れることが最優先です。'
+  },
+  {
+    id: 'distribution',
+    t: 'crit', badgeC: 'crit', badge: '最重要',
+    title: '空腹時間を長くしすぎない（3食＋補食でこまめに）',
+    body: '血糖値は食後2〜3時間で下がり始めます。ここで何も食べないと、体は血糖を保つために筋肉を分解してエネルギーにし、さらに「がんばりホルモン」を出して無理やり血糖値を持ち上げます。このホルモンを作る臓器（副腎）が休む間もなく働き続けると、だんだん元気が出にくくなり、疲れや生理前の不調につながります。空腹を長引かせないことが、筋肉も元気も守る一番の近道です。',
+    tips: ['3食に加えて10時・15〜16時の補食を。食後2〜3時間で下がり始めるタイミングを埋める',
+           '「夜だけドカ食い」は意志ではなく、昼間の空腹が長すぎるサイン',
+           '昼を抜きがちな人→デスクや車に置き食（甘栗・ゆで卵・ソイジョイ）を常備'],
+    score: s => {
+      let sc = 0;
+      if (['night_heavy','two_meals','light_lunch'].includes(s.meals)) sc += 9;
+      if (s.symptoms.has('no_muscle')) sc += 4;
+      if (s.symptoms.has('chronic_fatigue')) sc += 3;
+      if (s.symptoms.has('pms_bad')) sc += 1;
+      return sc;
+    },
+    today: '今日のお昼と夕方に、間食を1回入れてみましょう。空腹の時間を短くするだけで、筋肉と元気を守れます。'
+  },
+  {
+    id: 'balance',
+    t: 'main', badgeC: 'main', badge: '基本',
+    title: '毎食「ご飯・おかず・野菜」の3点セット',
+    body: 'この3つが揃うだけで血糖値の波はぐっと小さくなります。完璧でなくてOK、10回のうち6〜7回できれば体は変わります。',
+    tips: ['ご飯は握りこぶし1個分、おかず（肉・魚・卵・豆腐）は手のひら1枚分',
+           '食べる順番は、野菜→おかず→ご飯',
+           'ラーメンなど一品ものの日は、卵1個か豆腐を足すだけでOK'],
+    score: () => 5,
+    today: '次の食事で3つが揃っているかチェック。足りなければ卵1個を追加するだけでOKです。'
+  },
+  {
+    id: 'snack_timing',
+    t: 'main', badgeC: 'main', badge: '重要',
+    title: '10時と15時ごろに「小さな間食」を食べる',
+    body: '午後3〜4時は1日で一番エネルギーが切れやすい時間帯。夕方の甘いもの欲・イライラは意志が弱いのではなく「エネルギー切れのサイン」。切れる前に少し食べておくのがコツです。',
+    tips: ['10時ごろと15〜16時ごろの2回。特に午後が大事',
+           '量はおにぎり半分〜1個くらい。甘栗・干し芋・ゆで卵・バナナがおすすめ',
+           'カバンに甘栗や小袋の干し芋を常備しておく'],
+    score: s => {
+      let sc = 0;
+      if (['no_snack','unknown_timing','sweet_snack'].includes(s.snack)) sc += 8;
+      if (s.symptoms.has('afternoon_fatigue')) sc += 5;
+      if (s.symptoms.has('sugar_craving')) sc += 3;
+      if (s.symptoms.has('poor_focus')) sc += 2;
+      if (s.symptoms.has('irritable')) sc += 2;
+      // 朝食を抜いている人はまず朝食が先。補食の優先度は下げる
+      if (['no_breakfast','coffee_only'].includes(s.morning)) sc = Math.round(sc * 0.4);
+      return sc;
+    },
+    today: '15時にアラームをセットして、甘栗か干し芋を食べてみましょう。夕方の眠さと甘いもの欲が変わります。'
+  },
+  {
+    id: 'post_meal_move',
+    t: 'main', badgeC: 'main', badge: '食後ケア',
+    title: '食べたあと、すぐ座らず少しだけ動く',
+    body: '食後に軽く動くと血糖値の急上昇を防げます。運動は不要。「食後に皿洗い」で十分です。',
+    tips: ['食後の皿洗いや立ってする家事を10〜15分',
+           '食後すぐ横になるのはもったいない。動くなら1時間以内',
+           '※胃腸が弱い人・もたれやすい人は逆にゆっくり休んで消化を優先'],
+    score: s => {
+      let sc = 2;
+      if (s.symptoms.has('post_meal_sleep')) sc += 6;
+      if (s.symptoms.has('no_muscle')) sc += 2;
+      return sc;
+    },
+    today: '今夜の夕食後、まず皿洗いから。15分立っているだけで効果があります。'
+  },
+  {
+    id: 'sleep',
+    t: 'amber', badgeC: 'amber', badge: '睡眠',
+    title: '22時（遅くても23時）までに寝る',
+    body: '夜ふかしすると睡眠中に血糖値が下がりやすく、体はそれを持ち上げようと「がんばりホルモン」を出し続けます。すると寝ているのに体が休まりきりません。また寝不足の翌日は食欲を増やすホルモンが増え、誰でも食べすぎ・血糖値の乱れが起きやすくなります。食事のケアと就寝時刻はセットで効いてきます。',
+    tips: ['目標は22時就寝・7時間以上（まずは今より30分早めるところから）',
+           '寝る前に空腹だと夜間低血糖になりやすい→夕食が早い日は少量の補食を',
+           '寝る1時間前にスマホをやめ、カフェインは午後2時まで'],
+    score: s => {
+      let sc = 2;
+      if (s.bedtime === 'after_1')   sc += 8;
+      if (s.bedtime === 'midnight')  sc += 5;
+      if (s.bedtime === 'around_23') sc += 2;
+      if (s.symptoms.has('morning_weak')) sc += 4;
+      if (s.symptoms.has('chronic_fatigue')) sc += 3;
+      if (s.symptoms.has('pms_bad')) sc += 2;
+      return sc;
+    },
+    today: '今夜は就寝を30分だけ早めてみましょう。1週間で朝の目覚めが変わります。'
+  },
+  {
+    id: 'adrenal',
+    t: 'amber', badgeC: 'amber', badge: '副腎ケア',
+    title: '生理前のつらさ・とれない疲れは「頑張りすぎのサイン」',
+    body: 'PMSや、休んでも取れない疲れ。その裏では「がんばりホルモン」を作る臓器（副腎・ふくじん）が働きすぎて、元気が出にくくなっていることがあります。血糖値が下がるたびにこの臓器が動くので、間食で血糖値を安定させることが、そのままこの臓器を休ませることにつながります。',
+    tips: ['10時と15〜16時の間食が、生理前のイライラ改善に一番効く',
+           '生理前〜生理中は間食を1回増やす',
+           'ビタミンC（サプリなら1日1000〜3000mg）も回復を助ける'],
+    score: s => {
+      let sc = 0;
+      if (s.symptoms.has('pms_bad')) sc += 8;
+      if (s.symptoms.has('chronic_fatigue')) sc += 5;
+      if (s.symptoms.has('poor_focus')) sc += 3;
+      if (s.symptoms.has('irritable')) sc += 3;
+      if (s.symptoms.has('morning_weak')) sc += 2;
+      return sc;
+    },
+    today: '生理前の1週間、10時と16時の間食を毎日試してみましょう。イライラが明らかに違うはずです。'
+  },
+  {
+    id: 'gut_repair',
+    t: 'teal', badgeC: 'teal', badge: '腸内環境',
+    title: 'パン・乳製品を2週間だけお休みして腸を休ませる',
+    body: 'お腹の張り・ガス・胃もたれは腸のお疲れサイン。ただし先に整えるべきは「しっかり食べること」と「消化する力」。それでも不調が続くときの次のステップです。',
+    tips: ['2週間控えてみる：パン・パスタ・うどん、牛乳・ヨーグルト・チーズ',
+           '鼻炎・副鼻腔炎がある人は特に乳製品を控えると変化が出やすい',
+           '※食べる量が減ってしまうなら本末転倒。制限より食べることが先'],
+    score: s => {
+      let sc = 0;
+      if (s.gut.has('bloated')) sc += 3;
+      if (s.gut.has('loose_stool')) sc += 4;
+      if (s.gut.has('constipated')) sc += 4;
+      if (s.gut.has('digestive_slow')) sc += 2;
+      if (s.gut.has('gluten_dairy')) sc += 5;
+      if (s.gut.has('sinusitis')) sc += 4;
+      if (s.symptoms.has('chronic_fatigue')) sc += 2;
+      if (s.symptoms.has('no_muscle')) sc += 1;
+      return sc;
+    },
+    today: '今日の1食だけ、パンや麺を白ごはんに置き換えてみましょう。'
+  },
+  {
+    id: 'magnesium',
+    t: 'amber', badgeC: 'amber', badge: 'ミネラル',
+    title: 'まぶたのピクピク・足のつりにはマグネシウム',
+    body: 'まぶたのピクピクや夜中の足のつりは、マグネシウム不足のよくあるサインです。',
+    tips: ['多い食材：ナッツ・わかめや海苔・ほうれん草・ごま・大豆製品',
+           'にがりを味噌汁に10滴ほど入れるのも手軽',
+           'サプリなら1日400mgが目安（お腹がゆるくなったら減らす）'],
+    score: s => {
+      let sc = 0;
+      if (s.symptoms.has('eyelid_twitch')) sc += 10;
+      if (s.symptoms.has('cold_hands')) sc += 4;
+      if (s.symptoms.has('poor_focus')) sc += 2;
+      return sc;
+    },
+    today: '夕食の味噌汁ににがりを数滴か、青さをひとつまみ加えてみましょう。'
+  },
+  {
+    id: 'blood_sugar_swap',
+    t: 'amber', badgeC: 'amber', badge: '食品選び',
+    title: '甘いものがやめられないのは、意志ではなく血糖値の問題',
+    body: '甘いものを摂ると血糖値が急上昇→急降下し、脳が「もっと糖分を！」と命令します。これが「また欲しくなる」の正体。我慢ではなく、下がりすぎない仕組みを作れば欲求は自然に減ります。',
+    tips: ['まず3食＋10時・15時の間食。血糖値が下がりきらなければ強い欲求は起きない',
+           '欲しくなったら置き換え：チョコ→甘栗、クッキー→干し芋、ジュース→無糖のお茶や豆乳',
+           'お菓子は「なくなったら買わない」。家に置かないのが最強'],
+    score: s => {
+      let sc = 0;
+      if (s.symptoms.has('sugar_craving')) sc += 5;
+      if (s.snack === 'sweet_snack') sc += 5;
+      if (s.symptoms.has('post_meal_sleep')) sc += 2;
+      if (s.symptoms.has('irritable')) sc += 2;
+      return sc;
+    },
+    today: '今日はやめることは何もしなくてOK。15時に甘栗か干し芋を食べて、夕方の欲求が弱くなるのをまず体感しましょう。'
+  },
+  {
+    id: 'oil_upgrade',
+    t: 'amber', badgeC: 'amber', badge: '炎症対策',
+    title: 'サラダ油をやめて、ごま油・オリーブオイルに変える',
+    body: 'サラダ油の摂りすぎは体の中でじわじわ炎症を起こし、腸や血糖値の乱れにつながります。油の入れ替えは一番簡単な体質改善です。',
+    tips: ['炒め物にはごま油・バター・米油、サラダにはオリーブオイル＋お酢',
+           '避けたいのはサラダ油・マーガリン',
+           '揚げ物は週1回までに減らすだけでも効果あり'],
+    score: s => {
+      let sc = 0;
+      if (s.symptoms.has('irritable')) sc += 3;
+      if (s.gut.has('bloated')) sc += 3;
+      if (s.gut.has('gluten_dairy')) sc += 2;
+      if (s.symptoms.has('chronic_fatigue')) sc += 2;
+      return sc;
+    },
+    today: '次の買い替えで、サラダ油をオリーブオイルかごま油に変えてみましょう。'
+  },
+  {
+    id: 'cold_circulation',
+    t: 'teal', badgeC: 'teal', badge: '血行・冷え',
+    title: '手足の冷え・指先が白くなるのは「エネルギー切れ」のサイン',
+    body: '手足の冷えや指先の白さは、血糖値が下がったときに血管がきゅっと締まるせい。温活の前に、血糖値の安定が根本の解決になります。',
+    tips: ['冷える時間帯の1〜2時間前に間食を入れてみる',
+           '応急処置は温かい飲みもの＋梅干しおにぎりなど少しの炭水化物',
+           '貧血ぎみの人は血液検査で「フェリチン」も測ると隠れ貧血がわかる'],
+    score: s => {
+      let sc = 0;
+      if (s.symptoms.has('cold_hands')) sc += 9;
+      if (s.symptoms.has('dizziness')) sc += 4;
+      if (s.symptoms.has('chronic_fatigue')) sc += 2;
+      return sc;
+    },
+    today: '手足が冷たくなる時間帯をメモして、明日その1時間前に間食を試してみましょう。'
+  },
+  {
+    id: 'protein_variety',
+    t: 'main', badgeC: 'main', badge: 'タンパク質',
+    title: '肉・魚・卵・大豆をローテーションで食べる',
+    body: '毎日「卵だけ」「納豆だけ」では栄養が偏ります。「昨日と違うおかずにする」くらいの感覚で回しましょう。',
+    tips: ['朝は卵＋納豆や豆腐、昼は魚（サバ缶・ツナ缶）、夜は赤身のお肉など',
+           '間食で足すなら：ゆで卵・豆乳・ミートボール',
+           '胃が疲れているときは豆腐・温泉卵・白身魚がやさしい'],
+    score: s => {
+      let sc = 0;
+      if (s.symptoms.has('no_muscle')) sc += 7;
+      if (['two_meals','light_lunch'].includes(s.meals)) sc += 4;
+      if (s.gut.has('digestive_slow')) sc += 2;
+      return sc;
+    },
+    today: '今日のお昼にツナ缶・納豆・卵のどれかを1品追加してみましょう。'
+  },
+  {
+    id: 'digestive_enzyme',
+    t: 'teal', badgeC: 'teal', badge: '消化力',
+    title: 'よく噛んで「消化する力」を取り戻す',
+    body: '消化が追いつかないと、良いものを食べても栄養が体に届きません。道具もお金もいらない一番の対策は「よく噛むこと」です。',
+    tips: ['ひと口30回を目標に噛む',
+           '食事中に水やお茶をガブガブ飲みすぎない',
+           '胃が弱っているときはオクラ・山芋・おかゆ・豆腐・白身魚から'],
+    score: s => {
+      let sc = 0;
+      if (s.gut.has('digestive_slow')) sc += 11;
+      if (s.gut.has('bloated')) sc += 8;
+      if (s.symptoms.has('post_meal_sleep')) sc += 4;
+      if (s.gut.has('loose_stool')) sc += 4;
+      if (s.gut.has('gluten_dairy')) sc += 2;
+      return sc;
+    },
+    today: '今夜は「噛む回数を2倍」だけ意識してみましょう。食後の眠さが違うはずです。'
+  },
+  {
+    id: 'fermented',
+    t: 'teal', badgeC: 'teal', badge: '腸活',
+    title: '味噌・納豆・キムチを毎日どれか1品',
+    body: '腸の善玉菌が元気になると、血糖値の安定・免疫・気分まで良い変化が出ます。昔ながらの食卓にあるもので十分です。',
+    tips: ['味噌汁・納豆・キムチ・ぬか漬け・甘酒のどれかを毎日少しずつ',
+           '一番コスパが良いのは味噌汁（出汁＋味噌＋わかめでOK）',
+           '抗生物質を飲んだあとは特に意識して食べる'],
+    score: s => {
+      let sc = 0;
+      if (s.gut.has('loose_stool')) sc += 5;
+      if (s.gut.has('constipated')) sc += 5;
+      if (s.gut.has('bloated')) sc += 3;
+      if (s.symptoms.has('irritable')) sc += 2;
+      if (s.symptoms.has('pms_bad')) sc += 2;
+      return sc;
+    },
+    today: '今夜の夕食に味噌汁を1杯追加してみましょう。5分でできる今日の腸活です。'
+  },
+  {
+    id: 'belly_fiber',
+    t: 'main', badgeC: 'main', badge: 'お腹周り',
+    title: '食事の最初にキャベツや海藻・きのこを食べる',
+    body: '食事の最初に食物繊維を食べると糖の吸収がゆっくりになり、お腹周りに脂肪がつきにくくなります。',
+    tips: ['最初のひと口を千切りキャベツ・サラダ・味噌汁のわかめに',
+           'わかめ・もずく・オクラ・きのこ・もち麦が特におすすめ',
+           'コンビニならもずく酢か海藻サラダを1品プラス'],
+    score: s => {
+      let sc = 0;
+      if (s.symptoms.has('belly_fat')) sc += 9;
+      if (s.symptoms.has('post_meal_sleep')) sc += 3;
+      if (s.symptoms.has('sugar_craving')) sc += 2;
+      if (s.gut.has('constipated')) sc += 3;
+      return sc;
+    },
+    today: '今夜、千切りキャベツかもずく酢を「最初に」食べてみましょう。順番を変えるだけです。'
+  },
+  {
+    id: 'seasoning',
+    t: 'amber', badgeC: 'amber', badge: '調味料',
+    title: '調味料の裏側をチラッと見る習慣をつける',
+    body: '健康そうなドレッシングやめんつゆにも砂糖や甘い液糖がたっぷりのことが。毎日使うものだから、見直しの効果は大きいです。買い替えのタイミングで1つずつでOK。',
+    tips: ['原材料は「多い順」表示→最初の3つをチェック',
+           '「果糖ぶどう糖液糖」があったら別の商品を検討',
+           'みりんは「本みりん」、醤油は「丸大豆」と書いてあるものを'],
+    score: s => {
+      let sc = 0;
+      if (s.symptoms.has('post_meal_sleep')) sc += 3;
+      if (s.symptoms.has('sugar_craving')) sc += 3;
+      if (s.gut.has('gluten_dairy')) sc += 2;
+      return sc;
+    },
+    today: '今夜使う調味料を1つ裏返して、原材料の最初の3つを見てみましょう。'
+  },
+];
+
+/* ── Snack suggestions ── */
+const SNACKS_ALL = [
+  { name: '甘栗',       note: '血糖値の上昇が緩やか・持ち運び◎' },
+  { name: '干し芋',     note: '食物繊維が豊富・腹持ちよい' },
+  { name: 'おにぎり',   note: '炭水化物＋タンパク質で安定' },
+  { name: 'ゆで卵',     note: '常備しやすい・タンパク質補給' },
+  { name: 'バナナ',     note: '素早いエネルギー補給・外出時◎' },
+  { name: 'ミートボール', note: 'セブンで購入可・お湯で温めOK' },
+  { name: '豆乳',       note: 'タンパク質＋炭水化物で組み合わせ◎' },
+  { name: '蒸し大豆',   note: 'サラダ・スープへのちょい足しでも' },
+];
+
+function showResults() {
+  const scored = ADVICE
+    .map(a => ({ ...a, pts: a.score(state) }))
+    .filter(a => a.pts > 0)
+    .sort((a, b) => b.pts - a.pts);
+
+  if (scored.length === 0) scored.push({ ...ADVICE.find(a => a.id === 'balance'), pts: 1 });
+
+  // 記録を読み込み（同じアドバイスが続いていないか確認）
+  const r = loadRecord();
+  const topId = scored[0].id;
+  const alreadyShown = (r.lastShownId === topId) ? (r.sameCount || 0) : 0;
+
+  // 同じ最優先が2回続いていたら、次の優先度に切り替えて変化をつける
+  let idx = 0;
+  let varied = false;
+  if (alreadyShown >= 2 && scored.length > 1) {
+    idx = 1;
+    varied = true;
+  }
+  const top = scored[idx];
+
+  const out = document.getElementById('advice-out');
+  out.innerHTML = '';
+  const tips = top.tips
+    ? '<ul class="atips">' + top.tips.map(t => `<li>${t}</li>`).join('') + '</ul>'
+    : '';
+  const badgeText = varied ? 'つぎに大切なポイント' : 'あなたの最優先ポイント';
+  const variedNote = varied
+    ? '<div class="varied-note">同じ課題がしばらく続いています。今日は次のステップも試してみましょう（最優先は「' + scored[0].title + '」）。</div>'
+    : '';
+  out.innerHTML = `
+    <div class="acard t-${top.t}">
+      <div><span class="abadge ${top.badgeC}">${badgeText}</span></div>
+      <div class="atitle">${top.title}</div>
+      ${variedNote}
+      <div class="abody">${top.body}</div>
+      ${tips}
+      <div class="acard-today">
+        <span class="acard-today-label">まず今日1つだけ</span>
+        ${top.today || ''}
+      </div>
+    </div>`;
+
+  // 診断回数＋表示したアドバイスの連続回数を記録
+  r.diagnoses = (r.diagnoses || 0) + 1;
+  if (r.lastShownId === top.id) {
+    r.sameCount = (r.sameCount || 0) + 1;
+  } else {
+    r.lastShownId = top.id;
+    r.sameCount = 1;
+  }
+  saveRecord(r);
+
+  // 実践チェックのUIをリセット
+  checkedThisSession = false;
+  const cbtn = document.getElementById('check-btn');
+  cbtn.classList.remove('done');
+  cbtn.textContent = '今日から始めてみる';
+  renderRecord();
+
+  go('results');
+}
+
+/* ── 実践チェックを1回積む ── */
+function doCheck() {
+  if (checkedThisSession) return;
+  checkedThisSession = true;
+
+  const r = loadRecord();
+  const today = todayStr();
+  if (r.lastCheck === today) {
+    // 今日はすでにカウント済み（連続日数は増やさない）
+  } else {
+    if (r.lastCheck && daysBetween(r.lastCheck, today) === 1) {
+      r.streak = (r.streak || 0) + 1;
+    } else {
+      r.streak = 1;
+    }
+    r.lastCheck = today;
+  }
+  r.checks = (r.checks || 0) + 1;
+  saveRecord(r);
+
+  const cbtn = document.getElementById('check-btn');
+  cbtn.classList.add('done');
+  cbtn.textContent = '宣言しました。応援しています';
+  renderRecord();
+}
+
+/* ── 記録カードの表示 ── */
+function renderRecord() {
+  const r = loadRecord();
+  const el = document.getElementById('record-card');
+  if (r.checks > 0) {
+    el.classList.remove('hidden');
+    let msg;
+    if (r.checks === 1) {
+      msg = '最初の一歩を宣言しました。小さな積み重ねが、未来の身体をつくります。';
+    } else if (r.streak >= 3) {
+      msg = `${r.streak}日つづいています。この調子で、無理なく続けていきましょう`;
+    } else {
+      msg = 'よく続けています。完璧じゃなくて大丈夫、始めた日を数えていきましょう。';
+    }
+    el.innerHTML = `
+      <div class="record-stats">
+        <div class="record-stat">
+          <div class="record-num">${r.checks}</div>
+          <div class="record-label">始めてみた回数</div>
+        </div>
+        <div class="record-divider"></div>
+        <div class="record-stat">
+          <div class="record-num">${r.streak || 0}</div>
+          <div class="record-label">継続日数</div>
+        </div>
+      </div>
+      <div class="record-msg">${msg}</div>`;
+  } else {
+    el.classList.add('hidden');
+  }
+}
+
+/* ── 1日の流れ 総括アドバイス ── */
+function buildSummary() {
+  // 朝食
+  const breakfastLate = ['no_breakfast','coffee_only','late_breakfast'].includes(state.morning);
+  const morningDo = breakfastLate
+    ? '起きて30分以内に何かひと口（おにぎり・卵・バナナなど）'
+    : '朝食は今のペースを keep（タンパク質も忘れずに）';
+  // 補食
+  const needsSnack = ['no_snack','unknown_timing','sweet_snack'].includes(state.snack);
+  // 就寝
+  const bedLabel = {
+    after_1:   '深夜1時以降',
+    midnight:  '0〜1時ごろ',
+    around_23: '23時ごろ',
+    by_22:     '22時ごろ'
+  }[state.bedtime] || '';
+  const bedLate = ['after_1','midnight'].includes(state.bedtime);
+  const bedDo = bedLate
+    ? 'まずは今より30分早める。空腹で寝ると夜間低血糖になるので、遅い夕食の日は少量の補食を'
+    : (state.bedtime === 'around_23'
+        ? '22時を目標にあと少し前倒し'
+        : '就寝時刻は理想的。この習慣を続けましょう');
+
+  // リード文（全体総括）
+  const gaps = [];
+  if (breakfastLate) gaps.push('朝の空腹時間');
+  if (needsSnack)    gaps.push('日中の補食');
+  if (bedLate)       gaps.push('夜ふかし');
+  let lead;
+  if (gaps.length === 0) {
+    lead = '1日のリズムはよく整っています。今の「食べる→補う→早く休む」の流れを保つことが、筋肉と元気を守り、血糖値を安定させ続けるコツです。';
+  } else {
+    lead = `血糖値の安定は「点」ではなく「1日の流れ」で決まります。あなたの場合、特に<b>${gaps.join('・')}</b>が、筋肉が削られたり「がんばりホルモン」を出す臓器が疲れたりする原因になりやすいポイント。下の流れで、空腹の時間を埋めていきましょう。`;
+  }
+
+  const rows = [
+    ['起床後',  morningDo],
+    ['10時ごろ', '小さな補食（甘栗・干し芋・ゆで卵など）'],
+    ['お昼',    'ご飯・おかず・野菜の3点セット。タンパク質は手のひら1枚分'],
+    ['15〜16時', needsSnack ? '2回目の補食（ここが1日で一番大事）' : '2回目の補食を軽く'],
+    ['夜',      '夕食は軽めでもOK。食後は皿洗いなどで少し動く（胃腸が弱い人は休む）'],
+    ['就寝',    bedLabel ? `${bedDo}（今：${bedLabel}）` : bedDo]
+  ];
+
+  const el = document.getElementById('summary-card');
+  el.innerHTML = `
+    <div class="summary-eyebrow">あなたの1日の流れ</div>
+    <div class="summary-lead">${lead}</div>
+    <ul class="timeline">
+      ${rows.map(r => `<li><span class="tl-time">${r[0]}</span><span class="tl-do">${r[1]}</span></li>`).join('')}
+    </ul>`;
+}
+
+function restart() {
+  state.symptoms = new Set();
+  state.gut      = new Set();
+  state.morning  = state.meals = state.snack = state.bedtime = null;
+  history = ['welcome'];
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('sel'));
+  document.querySelectorAll('.opt').forEach(c => c.classList.remove('sel'));
+  ['morning','meals','snack','bedtime'].forEach(g => {
+    const b = document.getElementById('btn-' + g);
+    if (b) b.disabled = true;
+  });
+  renderWelcomeRecord();
+  go('welcome');
+}
+</script>
+</body>
+</html>
