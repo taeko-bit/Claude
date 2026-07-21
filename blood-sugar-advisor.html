@@ -179,9 +179,9 @@ h2 {
   padding: 12px 0 0;
 }
 .brand-mark {
-  width: 88px;
-  height: 88px;
-  margin: 0 auto 22px;
+  width: 104px;
+  height: 104px;
+  margin: 0 auto 20px;
   display: block;
 }
 .wordmark {
@@ -664,26 +664,62 @@ h2 {
   <!-- ── Welcome ── -->
   <div class="screen active" id="s-welcome">
     <div class="welcome-inner">
-      <svg class="brand-mark" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <!-- leaves -->
-        <path d="M50 78 C34 76 22 64 24 50 C36 52 47 62 50 78 Z" fill="#C3D2BC"/>
-        <path d="M50 78 C66 76 78 64 76 50 C64 52 53 62 50 78 Z" fill="#AEBCA7"/>
-        <path d="M50 80 L50 60" stroke="#9AAE95" stroke-width="1.4" stroke-linecap="round"/>
-        <!-- outer petals -->
-        <circle cx="50" cy="42" r="30" fill="#F5D9DF"/>
-        <path d="M50 12 C40 20 34 30 34 42 C34 30 40 20 50 12 Z" fill="#EFC9D2"/>
-        <circle cx="34" cy="40" r="15" fill="#F1CEd7"/>
-        <circle cx="66" cy="40" r="15" fill="#F1CED7"/>
-        <circle cx="42" cy="56" r="14" fill="#F3D3DB"/>
-        <circle cx="58" cy="56" r="14" fill="#F3D3DB"/>
-        <!-- mid petals -->
-        <circle cx="50" cy="34" r="13" fill="#FBE4E9"/>
-        <circle cx="40" cy="46" r="11" fill="#FBE4E9"/>
-        <circle cx="60" cy="46" r="11" fill="#FBE4E9"/>
-        <!-- inner bloom -->
-        <circle cx="50" cy="44" r="12" fill="#F7DAE1"/>
-        <circle cx="50" cy="44" r="6.5" fill="#E7B7C4"/>
-        <circle cx="50" cy="44" r="3" fill="#D99BAC"/>
+      <svg class="brand-mark" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <radialGradient id="petalOuter" cx="50%" cy="42%" r="62%">
+            <stop offset="0%" stop-color="#FCEEF1"/>
+            <stop offset="70%" stop-color="#F6DCE2"/>
+            <stop offset="100%" stop-color="#EDC6D0"/>
+          </radialGradient>
+          <radialGradient id="petalInner" cx="50%" cy="45%" r="60%">
+            <stop offset="0%" stop-color="#FDF4F6"/>
+            <stop offset="100%" stop-color="#F4D3DC"/>
+          </radialGradient>
+          <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#BFD0B8"/>
+            <stop offset="100%" stop-color="#9DB196"/>
+          </linearGradient>
+        </defs>
+
+        <!-- stem + leaves -->
+        <path d="M60 92 C61 80 61 70 60 60" stroke="#9DB196" stroke-width="1.3" stroke-linecap="round"/>
+        <path d="M60 84 C48 84 39 78 36 68 C48 67 57 73 60 84 Z" fill="url(#leaf)" opacity="0.9"/>
+        <path d="M60 88 C71 89 81 84 85 74 C74 72 64 77 60 88 Z" fill="url(#leaf)" opacity="0.75"/>
+        <path d="M40 70 C47 71 54 75 59 82" stroke="#8CA085" stroke-width="0.7" fill="none" opacity="0.6"/>
+
+        <!-- peony bloom, centered ~ (60,48) -->
+        <g stroke="#E1B2C0" stroke-width="0.7" stroke-linejoin="round">
+          <!-- outer petals (8) -->
+          <g fill="url(#petalOuter)">
+            <path d="M60 48 C50 40 49 26 60 16 C71 26 70 40 60 48 Z"/>
+            <path d="M60 48 C50 40 49 26 60 16 C71 26 70 40 60 48 Z" transform="rotate(45 60 48)"/>
+            <path d="M60 48 C50 40 49 26 60 16 C71 26 70 40 60 48 Z" transform="rotate(90 60 48)"/>
+            <path d="M60 48 C50 40 49 26 60 16 C71 26 70 40 60 48 Z" transform="rotate(135 60 48)"/>
+            <path d="M60 48 C50 40 49 26 60 16 C71 26 70 40 60 48 Z" transform="rotate(180 60 48)"/>
+            <path d="M60 48 C50 40 49 26 60 16 C71 26 70 40 60 48 Z" transform="rotate(225 60 48)"/>
+            <path d="M60 48 C50 40 49 26 60 16 C71 26 70 40 60 48 Z" transform="rotate(270 60 48)"/>
+            <path d="M60 48 C50 40 49 26 60 16 C71 26 70 40 60 48 Z" transform="rotate(315 60 48)"/>
+          </g>
+          <!-- inner petals (6, offset) -->
+          <g fill="url(#petalInner)">
+            <path d="M60 48 C53 43 52 33 60 26 C68 33 67 43 60 48 Z" transform="rotate(22 60 48)"/>
+            <path d="M60 48 C53 43 52 33 60 26 C68 33 67 43 60 48 Z" transform="rotate(82 60 48)"/>
+            <path d="M60 48 C53 43 52 33 60 26 C68 33 67 43 60 48 Z" transform="rotate(142 60 48)"/>
+            <path d="M60 48 C53 43 52 33 60 26 C68 33 67 43 60 48 Z" transform="rotate(202 60 48)"/>
+            <path d="M60 48 C53 43 52 33 60 26 C68 33 67 43 60 48 Z" transform="rotate(262 60 48)"/>
+            <path d="M60 48 C53 43 52 33 60 26 C68 33 67 43 60 48 Z" transform="rotate(322 60 48)"/>
+          </g>
+        </g>
+        <!-- center -->
+        <circle cx="60" cy="48" r="7.5" fill="#F0C6D2"/>
+        <circle cx="60" cy="48" r="4" fill="#E3AABA" stroke="#D492A6" stroke-width="0.5"/>
+        <g fill="#D492A6">
+          <circle cx="60" cy="43.5" r="0.9"/>
+          <circle cx="64" cy="47" r="0.9"/>
+          <circle cx="62.5" cy="51" r="0.9"/>
+          <circle cx="57.5" cy="51" r="0.9"/>
+          <circle cx="56" cy="47" r="0.9"/>
+        </g>
       </svg>
       <div class="wordmark">Bless&nbsp;<span class="lab">Lab</span></div>
       <div class="brand-tagline">身体が変わると、人生はもっと楽しめる。</div>
