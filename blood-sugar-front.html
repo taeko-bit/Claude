@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="app-version" content="front-2026-07-22.1">
+<title>Bless Lab ｜ やさしい血糖値チェック</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bless Lab">
+<style>
+:root {
+  --c-accent:       #C98A9A;
+  --c-accent-dim:   #F5D9DF;
+  --c-accent-deep:  #B06F81;
+  --c-teal:         #8AA08C;
+  --c-bg:           #FFFFFF;
+  --c-surface:      #FDFCFB;
+  --c-surface2:     #FBECEF;
+  --c-border:       #DDD6CD;
+  --c-text:         #5C5A58;
+  --c-text2:        #85817D;
+  --c-text3:        #ADA8A2;
+  --c-chip:         #FBECEF;
+  --c-chip-sel:     #C98A9A;
+  --c-chip-sel-txt: #FFFFFF;
+  --c-prog-bg:      #EEE9E2;
+  --c-prog-fill:    #C98A9A;
+  --shadow: 0 2px 12px rgba(92, 90, 88, 0.06);
+  --r: 16px;
+  --r-sm: 10px;
+  --transition: 0.28s ease;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Meiryo', sans-serif;
+  background: var(--c-bg);
+  color: var(--c-text);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 28px 16px 56px;
+}
+.app { width: 100%; max-width: 540px; }
+
+.prog-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 36px; }
+.prog-track { flex: 1; height: 3px; background: var(--c-prog-bg); border-radius: 2px; overflow: hidden; }
+.prog-fill { height: 100%; background: var(--c-prog-fill); border-radius: 2px; transition: width .4s cubic-bezier(.4,0,.2,1); }
+.prog-back { flex-shrink: 0; background: none; border: none; color: var(--c-text3); cursor: pointer; padding: 4px; border-radius: 6px; transition: color var(--transition); display: flex; align-items: center; }
+.prog-back:hover { color: var(--c-accent); }
+.prog-back.hidden { visibility: hidden; }
+
+.screen { display: none; }
+.screen.active { display: block; animation: fadeUp var(--transition) both; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { @keyframes fadeUp { from { opacity: 0; } to { opacity: 1; } } }
+
+.q-label { font-size: 12px; color: var(--c-text3); font-weight: 600; margin-bottom: 10px; letter-spacing: .05em; }
+.mincho { font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', Georgia, serif; }
+h2 { font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', Georgia, serif; font-size: 21px; font-weight: normal; line-height: 1.55; text-wrap: balance; color: var(--c-text); margin-bottom: 6px; }
+.hint { font-size: 12px; color: var(--c-text3); margin-bottom: 16px; }
+
+/* Welcome */
+.welcome-inner { text-align: center; padding: 48px 0 0; }
+.wordmark { font-family: Georgia, 'Times New Roman', serif; font-size: 40px; font-weight: 400; letter-spacing: .02em; color: var(--c-text); line-height: 1; margin-bottom: 16px; }
+.wordmark .lab { color: var(--c-accent); }
+.brand-tagline { font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', Georgia, serif; font-size: 15px; color: var(--c-text2); letter-spacing: .05em; line-height: 1.9; margin-bottom: 40px; }
+.brand-rule { width: 34px; height: 1px; background: var(--c-border); margin: 0 auto 32px; }
+.welcome-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: .18em; color: var(--c-teal); margin-bottom: 18px; }
+.welcome-hero { font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', Georgia, serif; font-size: 23px; line-height: 1.7; color: var(--c-text); text-wrap: balance; margin-bottom: 16px; }
+.welcome-desc { font-size: 13px; color: var(--c-text2); line-height: 2; margin-bottom: 8px; }
+.welcome-time { font-size: 11.5px; color: var(--c-text3); letter-spacing: .06em; margin-bottom: 36px; }
+
+/* Chips */
+.chips { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 28px; }
+.chip { padding: 10px 16px; border-radius: 100px; border: 1px solid var(--c-border); background: var(--c-chip); color: var(--c-text); font-size: 13.5px; cursor: pointer; transition: border-color var(--transition), background var(--transition), color var(--transition); user-select: none; line-height: 1.4; }
+.chip:hover { border-color: var(--c-accent); }
+.chip.sel { background: var(--c-chip-sel); color: var(--c-chip-sel-txt); border-color: var(--c-chip-sel); }
+
+/* Options */
+.options { display: flex; flex-direction: column; gap: 9px; margin-bottom: 28px; }
+.opt { display: flex; align-items: flex-start; gap: 12px; padding: 15px 16px; border-radius: var(--r); border: 1px solid var(--c-border); background: var(--c-surface); cursor: pointer; box-shadow: var(--shadow); transition: border-color var(--transition), background var(--transition); }
+.opt:hover { border-color: var(--c-accent); background: var(--c-surface2); }
+.opt.sel { border-color: var(--c-accent); background: var(--c-accent-dim); }
+.opt-dot { flex-shrink: 0; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--c-border); margin-top: 2px; transition: border-color var(--transition), background var(--transition); display: grid; place-items: center; }
+.opt.sel .opt-dot { border-color: var(--c-accent); background: var(--c-accent); }
+.opt.sel .opt-dot::after { content: ''; display: block; width: 7px; height: 7px; border-radius: 50%; background: var(--c-chip-sel-txt); }
+.opt-main { font-size: 14.5px; line-height: 1.45; color: var(--c-text); }
+.opt-sub { font-size: 12.5px; color: var(--c-text2); margin-top: 3px; line-height: 1.5; }
+
+/* Buttons */
+.btn { width: 100%; padding: 15px; border-radius: var(--r); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: background var(--transition); letter-spacing: .02em; }
+.btn-primary { background: var(--c-accent); color: #fff; }
+.btn-primary:hover { background: var(--c-accent-deep); }
+.btn-primary:disabled { opacity: .35; cursor: not-allowed; }
+.btn-ghost { background: transparent; border: 1px solid var(--c-border); color: var(--c-text2); margin-top: 10px; }
+.btn-ghost:hover { border-color: var(--c-accent); color: var(--c-accent); }
+.welcome-inner .btn { text-align: center; }
+
+/* Results */
+.results-intro { margin-bottom: 20px; }
+.results-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .16em; color: var(--c-accent); margin-bottom: 12px; }
+.results-h { font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', Georgia, serif; font-size: 24px; font-weight: normal; line-height: 1.5; text-wrap: balance; margin-bottom: 12px; }
+.results-sub { font-size: 13px; color: var(--c-text2); line-height: 1.9; margin-bottom: 22px; }
+
+.acard { background: var(--c-surface); border-radius: var(--r); border: 1px solid var(--c-border); border-left: 4px solid var(--c-accent); padding: 20px 22px; box-shadow: var(--shadow); margin-bottom: 20px; }
+.abadge { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .1em; padding: 3px 9px; border-radius: 5px; margin-bottom: 11px; background: rgba(201,138,154,.14); color: var(--c-accent-deep); }
+.atitle { font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', Georgia, serif; font-size: 17px; color: var(--c-text); line-height: 1.5; margin-bottom: 9px; }
+.abody { font-size: 13.5px; color: var(--c-text2); line-height: 1.85; }
+.atips { list-style: none; margin-top: 12px; display: flex; flex-direction: column; gap: 5px; }
+.atips li { font-size: 12.5px; color: var(--c-text2); padding-left: 15px; position: relative; line-height: 1.7; }
+.atips li::before { content: '›'; position: absolute; left: 0; color: var(--c-accent); font-weight: 700; }
+.acard-today { margin-top: 14px; padding: 12px 14px; background: var(--c-surface2); border-radius: var(--r-sm); font-size: 12.5px; color: var(--c-text2); line-height: 1.75; }
+.acard-today-label { display: block; font-size: 10px; font-weight: 700; letter-spacing: .12em; color: var(--c-accent-deep); margin-bottom: 5px; }
+
+/* 締めのメッセージ（ペルソナに寄り添う） */
+.closing {
+  margin: 26px 0 24px;
+  padding: 26px 24px;
+  border-radius: var(--r);
+  background: linear-gradient(135deg, var(--c-accent-dim), var(--c-surface2));
+  text-align: center;
+}
+.closing-mark { font-family: Georgia, serif; font-size: 26px; color: var(--c-accent); line-height: 1; margin-bottom: 14px; }
+.closing-body { font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', Georgia, serif; font-size: 15px; color: var(--c-text); line-height: 2; text-wrap: balance; }
+.closing-sign { margin-top: 16px; font-size: 12px; color: var(--c-text2); letter-spacing: .06em; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="prog-wrap">
+    <button class="prog-back hidden" id="back-btn" onclick="goBack()" aria-label="戻る">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12 5L7 10L12 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="prog-track"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+  </div>
+
+  <!-- Welcome -->
+  <div class="screen active" id="s-welcome">
+    <div class="welcome-inner">
+      <div class="wordmark">Bless&nbsp;<span class="lab">Lab</span></div>
+      <div class="brand-tagline">身体が変わると、<br>人生はもっと楽しめる。</div>
+      <div class="brand-rule"></div>
+      <div class="welcome-eyebrow">やさしい血糖値チェック</div>
+      <h1 class="welcome-hero">がんばりすぎているあなたへ、<br>今日できる小さな一つを。</h1>
+      <p class="welcome-desc">4つの質問に答えるだけ。<br>不調の裏にある「血糖値の波」を見つけて、<br>今日からできることをひとつだけお届けします。</p>
+      <p class="welcome-time">約1分</p>
+      <button class="btn btn-primary" onclick="go('symptoms')">はじめる</button>
+    </div>
+  </div>
+
+  <!-- Q1 症状 -->
+  <div class="screen" id="s-symptoms">
+    <div class="q-label">質問 1 / 4</div>
+    <h2>最近、気になっていることは？</h2>
+    <p class="hint">当てはまるものを選んでください（いくつでも）</p>
+    <div class="chips" id="chip-area">
+      <div class="chip" data-v="overwhelmed"      onclick="toggleChip(this)">気が休まらない・余裕がない</div>
+      <div class="chip" data-v="chronic_fatigue"  onclick="toggleChip(this)">疲れがとれない</div>
+      <div class="chip" data-v="irritable"        onclick="toggleChip(this)">イライラ・不安になりやすい</div>
+      <div class="chip" data-v="afternoon_fatigue" onclick="toggleChip(this)">夕方に強い眠気・疲れ</div>
+      <div class="chip" data-v="post_meal_sleep"  onclick="toggleChip(this)">食後に眠くなる</div>
+      <div class="chip" data-v="morning_weak"     onclick="toggleChip(this)">朝がつらい・起きられない</div>
+      <div class="chip" data-v="sugar_craving"    onclick="toggleChip(this)">甘いものがやめられない</div>
+      <div class="chip" data-v="cold_hands"       onclick="toggleChip(this)">冷え・手足が白くなる</div>
+    </div>
+    <button class="btn btn-primary" onclick="go('morning')">次へ</button>
+  </div>
+
+  <!-- Q2 朝 -->
+  <div class="screen" id="s-morning">
+    <div class="q-label">質問 2 / 4</div>
+    <h2>朝ごはんは、どうしていますか？</h2>
+    <div class="options">
+      <label class="opt" data-v="no_breakfast"><div class="opt-dot"></div><div><div class="opt-main">食べていないことが多い</div><div class="opt-sub">朝は何も食べずに動き出す</div></div></label>
+      <label class="opt" data-v="coffee_only"><div class="opt-dot"></div><div><div class="opt-main">コーヒーだけのことが多い</div><div class="opt-sub">コーヒーで済ませてしまう</div></div></label>
+      <label class="opt" data-v="late_breakfast"><div class="opt-dot"></div><div><div class="opt-main">起きて1時間以上たってから食べる</div><div class="opt-sub">午前が進んでから食べることが多い</div></div></label>
+      <label class="opt" data-v="early_breakfast"><div class="opt-dot"></div><div><div class="opt-main">起きて1時間以内に食べている</div><div class="opt-sub">朝ごはんの時間はほぼ問題ない</div></div></label>
+    </div>
+    <button class="btn btn-primary" id="btn-morning" onclick="go('snack')" disabled>次へ</button>
+  </div>
+
+  <!-- Q3 間食 -->
+  <div class="screen" id="s-snack">
+    <div class="q-label">質問 3 / 4</div>
+    <h2>食事のあいだの「間食」は？</h2>
+    <div class="options">
+      <label class="opt" data-v="no_snack"><div class="opt-dot"></div><div><div class="opt-main">ほとんどしない</div><div class="opt-sub">間食は我慢するようにしている</div></div></label>
+      <label class="opt" data-v="sweet_snack"><div class="opt-dot"></div><div><div class="opt-main">甘いお菓子・スナックを食べる</div><div class="opt-sub">チョコ・クッキー・ポテチなど</div></div></label>
+      <label class="opt" data-v="sometimes_snack"><div class="opt-dot"></div><div><div class="opt-main">時々食べる（毎日ではない）</div><div class="opt-sub">お腹が空いた時だけなど</div></div></label>
+      <label class="opt" data-v="healthy_snack"><div class="opt-dot"></div><div><div class="opt-main">芋・果物・おにぎりなどを食べる</div><div class="opt-sub">血糖値にやさしい間食ができている</div></div></label>
+    </div>
+    <button class="btn btn-primary" id="btn-snack" onclick="go('bedtime')" disabled>次へ</button>
+  </div>
+
+  <!-- Q4 就寝 -->
+  <div class="screen" id="s-bedtime">
+    <div class="q-label">質問 4 / 4</div>
+    <h2>ふだん、何時ごろ眠りますか？</h2>
+    <div class="options">
+      <label class="opt" data-v="after_1"><div class="opt-dot"></div><div><div class="opt-main">深夜1時以降・不規則</div><div class="opt-sub">寝る時間がバラバラになりがち</div></div></label>
+      <label class="opt" data-v="midnight"><div class="opt-dot"></div><div><div class="opt-main">0時〜1時ごろ</div><div class="opt-sub">日付が変わってから眠ることが多い</div></div></label>
+      <label class="opt" data-v="around_23"><div class="opt-dot"></div><div><div class="opt-main">23時ごろ</div><div class="opt-sub">もう少し早く眠りたいと感じている</div></div></label>
+      <label class="opt" data-v="by_22"><div class="opt-dot"></div><div><div class="opt-main">22時ごろまでに眠れている</div><div class="opt-sub">就寝時間はほぼ理想的</div></div></label>
+    </div>
+    <button class="btn btn-primary" id="btn-bedtime" onclick="showResults()" disabled>結果を見る</button>
+  </div>
+
+  <!-- Results -->
+  <div class="screen" id="s-results">
+    <div class="results-intro">
+      <div class="results-eyebrow">あなたへの、今日の一つ</div>
+      <h1 class="results-h">がんばらなくて、大丈夫。<br>まず、これだけで十分です。</h1>
+      <p class="results-sub">不調のほとんどは、意志の弱さではなく「血糖値の波」から。<br>今日はこの小さな一つだけ、試してみてください。</p>
+    </div>
+    <div id="advice-out"></div>
+    <div class="closing" id="closing"></div>
+    <button class="btn btn-ghost" onclick="restart()">もう一度チェックする</button>
+  </div>
+
+</div>
+
+<script>
+const state = { symptoms: new Set(), morning: null, snack: null, bedtime: null };
+const PROG = { welcome:0, symptoms:14, morning:38, snack:62, bedtime:86, results:100 };
+let history = ['welcome'];
+
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s-'+id).classList.add('active');
+  document.getElementById('prog').style.width = PROG[id]+'%';
+  if(id!=='welcome' && history[history.length-1]!==id) history.push(id);
+  document.getElementById('back-btn').classList.toggle('hidden', history.length<=1);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function goBack(){
+  if(history.length<=1) return;
+  history.pop();
+  const prev=history[history.length-1];
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s-'+prev).classList.add('active');
+  document.getElementById('prog').style.width = PROG[prev]+'%';
+  document.getElementById('back-btn').classList.toggle('hidden', history.length<=1);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleChip(el){
+  const v=el.dataset.v; el.classList.toggle('sel');
+  state.symptoms.has(v)?state.symptoms.delete(v):state.symptoms.add(v);
+}
+document.querySelectorAll('.options').forEach(group=>{
+  group.querySelectorAll('.opt').forEach(card=>{
+    card.addEventListener('click',()=>{
+      const grp=group.parentElement.id.replace('s-','');
+      group.querySelectorAll('.opt').forEach(c=>c.classList.remove('sel'));
+      card.classList.add('sel');
+      state[grp]=card.dataset.v;
+      const btn=document.getElementById('btn-'+grp); if(btn) btn.disabled=false;
+    });
+  });
+});
+
+/* ── アドバイス（少なめ・やさしいトーン） ── */
+const ADVICE = [
+  {
+    id:'rest', badge:'まず、これだけ',
+    title:'いちばん最初にしてほしいのは「食べること」',
+    body:'気が休まらない・疲れがとれないのは、あなたが弱いからではありません。血糖値が下がるたび、体は「がんばりホルモン」を出して踏ん張り続けています。まず食べて血糖値を安定させることが、心の余裕を取り戻す第一歩です。',
+    tips:['3食に加えて、10時と15時ごろに小さな間食を',
+          '甘栗・干し芋・おにぎり・バナナなど、手軽なものでOK',
+          '「ちゃんとしなきゃ」より、まず何か口に入れることを優先'],
+    today:'今日は15時ごろ、甘栗か干し芋をひとつ。それだけで夕方の気持ちが少しラクになります。',
+    score:s=>{let sc=0; if(s.symptoms.has('overwhelmed'))sc+=10; if(s.symptoms.has('chronic_fatigue'))sc+=8; if(s.symptoms.has('irritable'))sc+=7; return sc;}
+  },
+  {
+    id:'breakfast', badge:'まず、これだけ',
+    title:'朝は「作らなくていい朝ごはん」でいい',
+    body:'朝食を抜くと、体は筋肉を削ってエネルギーを作り、午前中のだるさやイライラにつながります。頑張って用意しなくて大丈夫。前の晩のごはんや、果物ひと口からで十分です。',
+    tips:['起きて1時間以内に、何かひと口だけ',
+          '食欲がなければ、バナナ・果物・お味噌汁など軽いものから',
+          'コーヒーだけはお休みして、「何か食べてから」の順番に'],
+    today:'明日の朝は、果物やおにぎりをひと口だけ。用意がラクなものを前の晩に置いておきましょう。',
+    score:s=>['no_breakfast','coffee_only','late_breakfast'].includes(s.morning)?9:0
+  },
+  {
+    id:'snack', badge:'今日のヒント',
+    title:'夕方のイライラは「エネルギー切れ」のサイン',
+    body:'午後3〜4時は、1日でいちばん血糖値が下がりやすい時間帯。夕方に甘いものが欲しくなったり、イライラするのは、意志の問題ではなく体からのSOSです。下がりきる前に、少し食べておきましょう。',
+    tips:['10時ごろと15〜16時ごろに、小さな間食を',
+          '甘栗・干し芋・ゆで卵・バナナなどがおすすめ',
+          'カバンに常備しておくと、コンビニスイーツに頼らずにすむ'],
+    today:'今日の15時に、甘いものの代わりに甘栗か干し芋を。夕方の欲求がやわらぎます。',
+    score:s=>{let sc=0; if(['no_snack','sweet_snack','sometimes_snack'].includes(s.snack))sc+=6; if(s.symptoms.has('afternoon_fatigue'))sc+=5; if(s.symptoms.has('sugar_craving'))sc+=4; return sc;}
+  },
+  {
+    id:'sugar', badge:'今日のヒント',
+    title:'甘いものがやめられないのは、あなたのせいじゃない',
+    body:'甘いものを食べると血糖値が急に上がり、その反動で急に下がります。すると脳が「もっと欲しい」と命令する——これが繰り返しの正体。我慢ではなく、下がりすぎない仕組みを作れば、欲求は自然とやわらぎます。',
+    tips:['まず3食＋10時・15時の間食で、血糖値を切らさない',
+          '欲しくなったら置き換え：チョコ→甘栗、ジュース→無糖のお茶や豆乳',
+          'お菓子は「家に置かない」。外で1つ買って楽しむのはOK'],
+    today:'今日は我慢しなくて大丈夫。15時に甘栗を食べて、夕方の欲求が減るのを感じてみて。',
+    score:s=>{let sc=0; if(s.symptoms.has('sugar_craving'))sc+=7; if(s.snack==='sweet_snack')sc+=4; return sc;}
+  },
+  {
+    id:'sleep', badge:'今日のヒント',
+    title:'夜ふかしは、がんばりすぎのサインかも',
+    body:'夜ふかしすると、睡眠中に血糖値が下がって「がんばりホルモン」が出続け、寝ているのに体が休まりません。あなたはもう十分やっています。今夜は少しだけ早く、自分を休ませてあげましょう。',
+    tips:['今より30分だけ早く布団に入るところから',
+          '寝る1時間前にスマホを閉じると寝つきが良くなる',
+          '寝る前にお腹が空くなら、果物を少量食べてから'],
+    today:'今夜は、いつもより30分だけ早く休みましょう。それだけで朝が少し変わります。',
+    score:s=>{let sc=0; if(s.bedtime==='after_1')sc+=7; if(s.bedtime==='midnight')sc+=5; if(s.symptoms.has('morning_weak'))sc+=4; return sc;}
+  },
+  {
+    id:'post_meal', badge:'今日のヒント',
+    title:'食後の眠気は、食べたあと少し動くだけで変わる',
+    body:'食後に強い眠気が出るのは、血糖値が急に上がっているサイン。食べたあと少しだけ体を動かすと、そのぼんやりが軽くなります。運動でなくて大丈夫、家事で十分です。',
+    tips:['食後に皿洗いや片付けを10分ほど',
+          '食後すぐ座り込まず、立って過ごすだけでもOK',
+          '※胃腸が弱い人は、逆にゆっくり休んで消化を優先'],
+    today:'今日の食事のあと、すぐ座らずに10分だけ動いてみましょう。',
+    score:s=>s.symptoms.has('post_meal_sleep')?6:0
+  },
+  {
+    id:'cold', badge:'今日のヒント',
+    title:'冷え・指先の白さも、血糖値のサイン',
+    body:'手足の冷えや指先が白くなるのは、血糖値が下がった時に血管がきゅっと締まるため。温める前に、まず血糖値を切らさないことが根っこの対策になります。',
+    tips:['冷えを感じる時間帯の1〜2時間前に、軽く間食を',
+          '温かい飲みもの＋梅干しおにぎりなど少しの炭水化物を',
+          'こまめな補食で、末端まで血がめぐりやすくなる'],
+    today:'冷えを感じやすい時間の前に、温かい飲みものと小さな補食を用意してみましょう。',
+    score:s=>s.symptoms.has('cold_hands')?6:0
+  },
+  {
+    id:'gentle', badge:'あなたへ',
+    title:'今のあなたは、よく整っています',
+    body:'大きな不調がなく、生活のリズムも整っているのは、あなたがこれまで自分を大切にしてきた証拠です。新しく頑張ることを足す必要はありません。今の穏やかなリズムを、そのまま続けていきましょう。',
+    tips:['今できていることを、意識せず続けられるまで大切に',
+          '気になる不調が出てきたら、そのとき見直せば大丈夫',
+          'ときどきこのチェックで、自分をねぎらう時間を'],
+    today:'今日は特別なことをしなくて大丈夫。よくやっている自分を、少し認めてあげてください。',
+    score:()=>1
+  }
+];
+
+/* 締めのメッセージ（ペルソナに寄り添う・誘導なし） */
+const CLOSINGS = [
+  'あなたは、誰よりもよく頑張っています。<br>それでも「まだ足りない」と感じてしまうのは、<br>あなたが優しくて、責任感が強いから。<br><br>身体を整えるのは、もっと頑張るためではなく、<br>頑張らなくても穏やかでいられる自分を、<br>取り戻すためです。<br><br>今日は、上の小さな一つだけ。<br>それができたら、もう十分です。',
+  'ちゃんとしなきゃ、と思う日ほど、<br>まず自分に食べさせてあげてください。<br><br>心の余裕は、気合いではなく、<br>血糖値の安定から生まれます。<br><br>「今の私でも、大丈夫」。<br>そう思える毎日を、少しずつ。'
+];
+
+function showResults(){
+  const scored = ADVICE.map(a=>({...a,pts:a.score(state)})).filter(a=>a.pts>0).sort((a,b)=>b.pts-a.pts);
+  const top = scored[0] || ADVICE.find(a=>a.id==='gentle');
+  const tips = top.tips ? '<ul class="atips">'+top.tips.map(t=>`<li>${t}</li>`).join('')+'</ul>' : '';
+  document.getElementById('advice-out').innerHTML = `
+    <div class="acard">
+      <div><span class="abadge">${top.badge}</span></div>
+      <div class="atitle">${top.title}</div>
+      <div class="abody">${top.body}</div>
+      ${tips}
+      <div class="acard-today"><span class="acard-today-label">まず今日、ひとつだけ</span>${top.today}</div>
+    </div>`;
+  const msg = CLOSINGS[Math.floor(Math.random()*CLOSINGS.length)];
+  document.getElementById('closing').innerHTML = `<div class="closing-mark">❦</div><div class="closing-body mincho">${msg}</div><div class="closing-sign">— Bless Lab</div>`;
+  go('results');
+}
+
+function restart(){
+  state.symptoms=new Set(); state.morning=state.snack=state.bedtime=null;
+  history=['welcome'];
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
+  document.querySelectorAll('.opt').forEach(c=>c.classList.remove('sel'));
+  ['morning','snack','bedtime'].forEach(g=>{const b=document.getElementById('btn-'+g); if(b) b.disabled=true;});
+  go('welcome');
+}
+</script>
+</body>
+</html>
