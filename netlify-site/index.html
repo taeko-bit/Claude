@@ -9,7 +9,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <!-- ビルドバージョン（更新の目印） -->
-<meta name="app-version" content="2026-07-21.10">
+<meta name="app-version" content="2026-07-21.11">
 
 <title>血糖値安定アドバイザー</title>
 <!-- iPhoneホーム画面アイコン（葉のイラスト） -->
@@ -936,11 +936,18 @@ h2 {
           <div class="opt-sub">チョコ・ポテチ・クッキーなど</div>
         </div>
       </label>
+      <label class="opt" data-v="sometimes_snack">
+        <div class="opt-dot"></div>
+        <div>
+          <div class="opt-main">時々食べる（毎日ではない）</div>
+          <div class="opt-sub">お腹が空いた時だけ・気が向いた時など</div>
+        </div>
+      </label>
       <label class="opt" data-v="healthy_snack">
         <div class="opt-dot"></div>
         <div>
-          <div class="opt-main">芋・果物・おにぎりなどを食べる</div>
-          <div class="opt-sub">血糖値にやさしい間食ができている</div>
+          <div class="opt-main">芋・果物・おにぎりなどを毎日食べる</div>
+          <div class="opt-sub">血糖値にやさしい間食が習慣になっている</div>
         </div>
       </label>
       <label class="opt" data-v="unknown_timing">
@@ -1045,7 +1052,7 @@ h2 {
    ・古いService Worker / PWAキャッシュが端末に残っていた場合は、
      ここで自動的に解除・削除して常に最新版が表示されるようにする
 ─────────────────────────────────────────────── */
-var APP_VERSION = '2026-07-21.10';
+var APP_VERSION = '2026-07-21.11';
 (function purgeStaleCaches() {
   try {
     // 過去に自己ホスト等でService Workerが登録されていたら解除
@@ -1236,6 +1243,7 @@ const ADVICE = [
     score: s => {
       let sc = 0;
       if (['no_snack','unknown_timing','sweet_snack'].includes(s.snack)) sc += 8;
+      if (s.snack === 'sometimes_snack') sc += 5;
       if (s.symptoms.has('afternoon_fatigue')) sc += 5;
       if (s.symptoms.has('sugar_craving')) sc += 3;
       if (s.symptoms.has('poor_focus')) sc += 2;
@@ -1316,12 +1324,32 @@ const ADVICE = [
       if (s.gut.has('constipated')) sc += 4;
       if (s.gut.has('digestive_slow')) sc += 2;
       if (s.gut.has('gluten_dairy')) sc += 5;
-      if (s.gut.has('sinusitis')) sc += 4;
+      if (s.gut.has('sinusitis')) sc += 2;
       if (s.symptoms.has('chronic_fatigue')) sc += 2;
       if (s.symptoms.has('no_muscle')) sc += 1;
       return sc;
     },
     today: '今日の1食だけ、パンや麺を白ごはんに置き換えてみましょう。'
+  },
+  {
+    id: 'sinus_care',
+    t: 'teal', badgeC: 'teal', badge: '鼻・のど',
+    title: '副鼻腔炎・鼻炎があるなら、鼻うがいと乳製品オフを',
+    body: '副鼻腔炎や慢性的な鼻炎は、炎症が長引くと疲れやすさにもつながります。まず炎症物質を洗い流す「鼻うがい」と、粘液を増やしやすい乳製品を控えることから。あわせて血糖値を安定させると、粘膜の修復が進みやすくなります。',
+    tips: ['鼻うがいを1日1〜2回（サイナスリンスなどの器具を使うと痛くない）',
+           '牛乳・ヨーグルト・チーズなどの乳製品を控えると変化が出やすい',
+           '体の熱を取る食材（バナナ・緑豆もやし・ゴーヤー）を取り入れる',
+           '炎症対策にビタミンC・ケルセチン、副鼻腔炎にはオレガノのサプリも',
+           '粘膜を作るビタミンA・亜鉛が不足しがち。魚・卵・牡蠣・レバーなどで補う'],
+    caution: '症状が長引く・膿性の鼻水や強い頭痛がある場合は、耳鼻科を受診してください（上咽頭の炎症にはBスポット療法という選択肢もあります）。',
+    score: s => {
+      let sc = 0;
+      if (s.gut.has('sinusitis')) sc += 9;
+      if (s.gut.has('gluten_dairy')) sc += 2;
+      if (s.symptoms.has('chronic_fatigue')) sc += 2;
+      return sc;
+    },
+    today: '今日は鼻うがいを1回試してみましょう。器具（サイナスリンス）があると痛みなくできます。'
   },
   {
     id: 'magnesium',
@@ -1697,7 +1725,7 @@ function buildSummary() {
     ? '起きて1時間以内に何かひと口（おにぎり・バナナ・果物など）'
     : '朝食は今のペースを大切に（タンパク質も忘れずに）';
   // 補食
-  const needsSnack = ['no_snack','unknown_timing','sweet_snack'].includes(state.snack);
+  const needsSnack = ['no_snack','unknown_timing','sweet_snack','sometimes_snack'].includes(state.snack);
   // 就寝
   const bedLabel = {
     after_1:   '深夜1時以降',
