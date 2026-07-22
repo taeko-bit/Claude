@@ -9,7 +9,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <!-- ビルドバージョン（更新の目印） -->
-<meta name="app-version" content="2026-07-21.14">
+<meta name="app-version" content="2026-07-21.15">
 
 <title>血糖値安定アドバイザー</title>
 <!-- iPhoneホーム画面アイコン（葉のイラスト） -->
@@ -563,6 +563,17 @@ h2 {
 }
 .welcome-record.hidden { display: none; }
 .welcome-record b { color: var(--c-accent-deep); font-size: 15px; }
+.daily-limit {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: var(--r);
+  background: var(--c-surface2);
+  border: 1px solid var(--c-border);
+  font-size: 13px;
+  color: var(--c-text2);
+  line-height: 1.8;
+}
+.daily-limit.hidden { display: none; }
 
 .check-btn { margin: 18px 0 0; }
 .check-btn.done {
@@ -811,7 +822,8 @@ h2 {
       <p class="welcome-time">約1〜2分</p>
 
       <div class="welcome-record" id="welcome-record"></div>
-      <button class="btn btn-primary" onclick="go('symptoms')">はじめる</button>
+      <div class="daily-limit hidden" id="daily-limit"></div>
+      <button class="btn btn-primary" id="start-btn" onclick="startDiagnosis()">はじめる</button>
     </div>
   </div>
 
@@ -1052,7 +1064,7 @@ h2 {
    ・古いService Worker / PWAキャッシュが端末に残っていた場合は、
      ここで自動的に解除・削除して常に最新版が表示されるようにする
 ─────────────────────────────────────────────── */
-var APP_VERSION = '2026-07-21.14';
+var APP_VERSION = '2026-07-21.15';
 (function purgeStaleCaches() {
   try {
     // 過去に自己ホスト等でService Workerが登録されていたら解除
@@ -1115,19 +1127,54 @@ function daysBetween(a, b) {
 }
 let checkedThisSession = false;
 
-// welcome画面におかえりメッセージ
+// 1日の診断回数の上限
+const DAILY_LIMIT = 2;
+
+function diagnosesToday() {
+  const r = loadRecord();
+  return (r.lastDiagDate === todayStr()) ? (r.todayCount || 0) : 0;
+}
+
+// welcome画面におかえりメッセージ＋1日の上限表示
 function renderWelcomeRecord() {
   const r = loadRecord();
   const el = document.getElementById('welcome-record');
-  if (!el) return;
-  if (r.checks > 0) {
-    el.classList.remove('hidden');
-    el.innerHTML = `おかえりなさい<br>これまで <b>${r.checks}</b> 回、一歩を積み重ねています。` +
-      (r.streak > 1 ? `　（継続 <b>${r.streak}</b> 日）` : '');
-  } else {
-    el.classList.add('hidden');
+  if (el) {
+    if (r.checks > 0) {
+      el.classList.remove('hidden');
+      el.innerHTML = `おかえりなさい<br>これまで <b>${r.checks}</b> 回、一歩を積み重ねています。` +
+        (r.streak > 1 ? `　（継続 <b>${r.streak}</b> 日）` : '');
+    } else {
+      el.classList.add('hidden');
+    }
+  }
+  // 1日の上限チェック
+  const limitEl = document.getElementById('daily-limit');
+  const startBtn = document.getElementById('start-btn');
+  const used = diagnosesToday();
+  if (limitEl && startBtn) {
+    if (used >= DAILY_LIMIT) {
+      limitEl.classList.remove('hidden');
+      limitEl.innerHTML = '今日の診断は終了です（1日2回まで）。<br>また明日、あなたの様子を聞かせてください。';
+      startBtn.disabled = true;
+      startBtn.textContent = 'また明日';
+    } else {
+      limitEl.classList.add('hidden');
+      startBtn.disabled = false;
+      startBtn.textContent = (used === 1) ? 'もう一度診断する（本日あと1回）' : 'はじめる';
+    }
   }
 }
+
+// はじめるボタン：上限を確認してから開始
+function startDiagnosis() {
+  if (diagnosesToday() >= DAILY_LIMIT) {
+    renderWelcomeRecord();
+    return;
+  }
+  go('symptoms');
+}
+
 renderWelcomeRecord();
 
 const PROG = { welcome:0, symptoms:11, morning:26, meals:42, snack:58, gut:74, bedtime:90, results:100 };
@@ -1500,8 +1547,8 @@ const ADVICE = [
   {
     id: 'protein_variety',
     t: 'main', badgeC: 'main', badge: 'タンパク質',
-    title: '筋肉がつきにくいのは、食事量の不足のサイン',
-    body: '「筋肉がつきにくい・痩せにくい」の裏には、食事量の不足（カロリー・タンパク質不足）や血糖値の乱れが隠れていることがよくあります。まず1日の食事量が足りているかチェックを。そのうえで、肉・魚・卵・大豆をローテーションでしっかり摂りましょう。',
+    title: '筋肉がつきにくいのは、食事量が足りていないサインかも',
+    body: '「筋肉がつきにくい・痩せにくい」の裏には、血糖値の乱れやカロリー・タンパク質不足が隠れていることがあります。まず1日の食事量が足りているかチェックを。そのうえで、肉・魚・卵・大豆をローテーションでしっかり摂りましょう。',
     tips: ['まず食事量チェック：ご飯（糖質）を極端に減らしていないか、3食食べられているか',
            'タンパク質は毎食、手のひら1枚分。朝は卵＋納豆、昼は魚、夜は赤身の肉など',
            '足りない分は補食で：豆乳・ゆで卵・少量のプロテインなど'],
@@ -1717,6 +1764,14 @@ function showResults() {
 
   // 診断回数を記録（変化ルールの状態は上で更新済み）
   r.diagnoses = (r.diagnoses || 0) + 1;
+  // 1日の回数（日付が変わったらリセット）
+  const today = todayStr();
+  if (r.lastDiagDate === today) {
+    r.todayCount = (r.todayCount || 0) + 1;
+  } else {
+    r.lastDiagDate = today;
+    r.todayCount = 1;
+  }
   saveRecord(r);
 
   // ── 5回達成で「総合アドバイス（1日の流れ）」を出現させる ──
