@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="front-2026-07-22.1">
+<meta name="app-version" content="front-2026-07-22.2">
 <title>Bless Lab ｜ やさしい血糖値チェック</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -350,19 +350,18 @@ const ADVICE = [
 /* 締めのメッセージ（ペルソナに寄り添う・誘導なし） */
 const CLOSINGS = [
   'あなたは、誰よりもよく頑張っています。<br>それでも「まだ足りない」と感じてしまうのは、<br>あなたが優しくて、責任感が強いから。<br><br>身体を整えるのは、もっと頑張るためではなく、<br>頑張らなくても穏やかでいられる自分を、<br>取り戻すためです。<br><br>今日は、上の小さな一つだけ。<br>それができたら、もう十分です。',
-  'ちゃんとしなきゃ、と思う日ほど、<br>まず自分に食べさせてあげてください。<br><br>心の余裕は、気合いではなく、<br>血糖値の安定から生まれます。<br><br>「今の私でも、大丈夫」。<br>そう思える毎日を、少しずつ。'
+  'ちゃんとしなきゃ、と思う日ほど、<br>まず少しだけ、ゆっくりする時間をつくってみましょう。<br><br>心の余裕は、気合いではなく、<br>食べること・休むことから生まれます。<br><br>「今の私でも、大丈夫」。<br>そう思える毎日を、少しずつ。'
 ];
 
 function showResults(){
   const scored = ADVICE.map(a=>({...a,pts:a.score(state)})).filter(a=>a.pts>0).sort((a,b)=>b.pts-a.pts);
   const top = scored[0] || ADVICE.find(a=>a.id==='gentle');
-  const tips = top.tips ? '<ul class="atips">'+top.tips.map(t=>`<li>${t}</li>`).join('')+'</ul>' : '';
+  // フロント版はtipsを見せず、本文＋「今日ひとつだけ」だけに絞る
   document.getElementById('advice-out').innerHTML = `
     <div class="acard">
       <div><span class="abadge">${top.badge}</span></div>
       <div class="atitle">${top.title}</div>
       <div class="abody">${top.body}</div>
-      ${tips}
       <div class="acard-today"><span class="acard-today-label">まず今日、ひとつだけ</span>${top.today}</div>
     </div>`;
   const msg = CLOSINGS[Math.floor(Math.random()*CLOSINGS.length)];
